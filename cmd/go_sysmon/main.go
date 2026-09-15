@@ -30,7 +30,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	ui.Preview(*snapshot)
+	ui.Preview(snapshot)
 
 	return nil
 }

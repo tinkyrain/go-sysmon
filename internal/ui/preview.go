@@ -17,6 +17,7 @@ func Preview(snapshot metrics.Snapshot) {
 
 	fmt.Println("--------" + " CPU " + "--------")
 	fmt.Println("CPU Usage: " + strconv.FormatFloat(snapshot.CPUUsage, 'f', -1, 64) + "%")
+
 	for _, disk := range snapshot.Disks {
 		fmt.Println("-------- Disk: " + disk.Mount + " --------")
 		fmt.Println("Disk Total: ", disk.Total)

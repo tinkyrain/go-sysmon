@@ -19,22 +19,22 @@ func New(procRoot string, interval time.Duration) *Collector {
 	}
 }
 
-func (c *Collector) Collect() (*Snapshot, error) {
-	snapshot := &Snapshot{}
+func (c *Collector) Collect() (Snapshot, error) {
+	snapshot := Snapshot{}
 
 	memory, err := c.readMemory()
 	if err != nil {
-		return nil, err
+		return snapshot, err
 	}
 
 	disks, err := c.readDisks()
 	if err != nil {
-		return nil, err
+		return snapshot, err
 	}
 
 	cpuTick, err := c.readCPUTick()
 	if err != nil {
-		return nil, err
+		return snapshot, err
 	}
 
 	snapshot.Time = time.Now()

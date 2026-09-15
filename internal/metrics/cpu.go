@@ -12,19 +12,27 @@ type CPUTick struct {
 	NonIdle uint
 }
 
-type CPU struct {
-	Title        string
-	UsagePercent float64
+type CPUTickMetrics struct {
+	User      uint
+	Nice      uint
+	System    uint
+	Idle      uint
+	Iowait    uint
+	Irq       uint
+	Softirq   uint
+	Steal     uint
+	Guest     uint
+	GuestNice uint
 }
 
-const filenameStat = "stat"
+const statFilename = "stat"
 const cpuParamName = "cpu"
 
-func (c *Collector) readCPU() (map[string]CPUTick, error) {
-	var result map[string]CPUTick = make(map[string]CPUTick)
-	data, err := c.fs.ScanRows(filenameStat)
+func (c *Collector) readCPUTick() (CPUTick, error) {
+	var tick CPUTick
+	data, err := c.fs.ScanRows(statFilename)
 	if err != nil {
-		return result, err
+		return tick, err
 	}
 
 	for _, line := range data {
@@ -34,75 +42,64 @@ func (c *Collector) readCPU() (map[string]CPUTick, error) {
 			continue
 		}
 
-		if !strings.HasPrefix(fields[0], cpuParamName) {
+		if fields[0] != cpuParamName {
 			continue
 		}
-		key := cpuParamName
-		if len(fields[0]) > len(cpuParamName) {
-			key = fields[0][len(cpuParamName):]
-		}
 
-		cpuMetrics, err := convertStringMetricsToUint(map[string]string{
-			"user":       fields[1],
-			"nice":       fields[2],
-			"system":     fields[3],
-			"idle":       fields[4],
-			"iowait":     fields[5],
-			"irq":        fields[6],
-			"softirq":    fields[7],
-			"steal":      fields[8],
-			"guest":      fields[9],
-			"guest_nice": fields[10],
-		})
-
+		tickMetrics, err := convertArrayMetricsToStruct(fields[1:])
 		if err != nil {
-			return result, err
+			return tick, err
 		}
 
-		Idle := cpuMetrics["idle"] + cpuMetrics["iowait"]
-		NonIdle := cpuMetrics["user"] + cpuMetrics["nice"] + cpuMetrics["system"] + cpuMetrics["irq"] +
-			cpuMetrics["softirq"] + cpuMetrics["steal"]
+		Idle := tickMetrics.Idle + tickMetrics.Iowait
+		NonIdle := tickMetrics.User + tickMetrics.Nice + tickMetrics.System + tickMetrics.Irq +
+			tickMetrics.Softirq + tickMetrics.Steal
 		Total := Idle + NonIdle
 
-		result[key] = CPUTick{
+		tick = CPUTick{
 			Total:   Total,
 			Idle:    Idle,
 			NonIdle: NonIdle,
 		}
+		break
 	}
 
-	return result, nil
+	return tick, nil
 }
 
-func calculateCPUUsage(prev, cur map[string]CPUTick) []CPU {
-	var result []CPU
-	for core, curTick := range cur {
-		cpu := CPU{
-			Title:        core,
-			UsagePercent: 0,
-		}
-		if prevTick, ok := prev[core]; ok {
-			idleDelta := curTick.Idle - prevTick.Idle
-			nonIdleDelta := curTick.NonIdle - prevTick.NonIdle
-			totalDelta := idleDelta + nonIdleDelta
+func calculateCPUUsage(prev, cur CPUTick) float64 {
+	var percentUsage float64
 
-			if nonIdleDelta > 0 && totalDelta > 0 {
-				cpu.UsagePercent = float64(nonIdleDelta) / float64(totalDelta) * 100
-			}
-		}
-		result = append(result, cpu)
+	idleDelta := cur.Idle - prev.Idle
+	nonIdleDelta := cur.NonIdle - prev.NonIdle
+	totalDelta := idleDelta + nonIdleDelta
+
+	if nonIdleDelta > 0 && totalDelta > 0 {
+		percentUsage = float64(nonIdleDelta) / float64(totalDelta) * 100
 	}
-	return result
+
+	return percentUsage
 }
 
-func convertStringMetricsToUint(metrics map[string]string) (map[string]uint, error) {
-	converted := make(map[string]uint, len(metrics))
-	for key, value := range metrics {
+func convertArrayMetricsToStruct(metrics []string) (CPUTickMetrics, error) {
+	converted := make([]uint, len(metrics))
+	for _, value := range metrics {
 		convertedValue, err := strconv.ParseUint(value, 10, 64)
 		if err != nil {
-			return converted, fmt.Errorf("could not convert %s to uint", value)
+			return CPUTickMetrics{}, fmt.Errorf("could not convert %s to uint", value)
 		}
-		converted[key] = uint(convertedValue)
+		converted = append(converted, uint(convertedValue))
 	}
-	return converted, nil
+	return CPUTickMetrics{
+		User:      converted[1],
+		Nice:      converted[2],
+		System:    converted[3],
+		Idle:      converted[4],
+		Iowait:    converted[5],
+		Irq:       converted[6],
+		Softirq:   converted[7],
+		Steal:     converted[8],
+		Guest:     converted[9],
+		GuestNice: converted[10],
+	}, nil
 }

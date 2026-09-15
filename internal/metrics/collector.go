@@ -6,8 +6,9 @@ import (
 )
 
 type Collector struct {
-	interval time.Duration
-	fs       procfs.FileScanner
+	interval     time.Duration
+	fs           procfs.FileScanner
+	prevCPUTicks map[string]CPUTick
 }
 
 func New(procRoot string, interval time.Duration) *Collector {
@@ -18,21 +19,37 @@ func New(procRoot string, interval time.Duration) *Collector {
 	}
 }
 
-func (c *Collector) Collect() (Snapshot, error) {
-	var snapshot = Snapshot{}
-	snapshot.Time = time.Now()
+func (c *Collector) Collect() (*Snapshot, error) {
+	snapshot := &Snapshot{}
 
 	memory, err := c.readMemory()
 	if err != nil {
-		return snapshot, err
-	}
-	disks, err := c.readDisks()
-	if err != nil {
-		return snapshot, err
+		return nil, err
 	}
 
+	disks, err := c.readDisks()
+	if err != nil {
+		return nil, err
+	}
+
+	cpu, err := c.readCPU()
+	if err != nil {
+		return nil, err
+	}
+	var cpuUsagePercent []CPU
+	if len(c.prevCPUTicks) == 0 {
+		for core, _ := range cpu {
+			cpuUsagePercent = append(cpuUsagePercent, CPU{Title: core, UsagePercent: 0})
+		}
+	} else {
+		cpuUsagePercent = calculateCPUUsage(c.prevCPUTicks, cpu)
+	}
+	c.prevCPUTicks = cpu
+
+	snapshot.Time = time.Now()
 	snapshot.Disks = disks
 	snapshot.Memory = memory
+	snapshot.CPUUsage = cpuUsagePercent
 
 	return snapshot, nil
 }

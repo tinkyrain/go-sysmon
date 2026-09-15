@@ -6,5 +6,5 @@ type Snapshot struct {
 	Time     time.Time
 	Memory   Memory
 	Disks    []Disk
-	CPUUsage float64
+	CPUUsage []CPU
 }

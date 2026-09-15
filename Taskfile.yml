@@ -1,0 +1,12 @@
+version: '3'
+
+tasks:
+  vet:
+    desc: Start go vet
+    cmds:
+      - go vet
+
+  lint:
+    desc: Start lint project
+    cmds:
+      - golangci-lint run

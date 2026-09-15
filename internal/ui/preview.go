@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"go-sysmon/internal/metrics"
+	"strconv"
 )
 
 func Preview(snapshot metrics.Snapshot) {
@@ -15,7 +16,7 @@ func Preview(snapshot metrics.Snapshot) {
 	fmt.Println("SWAP Available: ", snapshot.Memory.SwapAvailable)
 
 	fmt.Println("--------" + " CPU " + "--------")
-	fmt.Println("CPU Usage: ", snapshot.CPUUsage)
+	fmt.Println("CPU Usage: " + strconv.FormatFloat(snapshot.CPUUsage, 'f', -1, 64) + "%")
 
 	for _, disk := range snapshot.Disks {
 		fmt.Println("-------- Disk: " + disk.Mount + " --------")

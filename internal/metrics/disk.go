@@ -28,7 +28,7 @@ func (c *Collector) readDisks() ([]Disk, error) {
 		var stat syscall.Statfs_t
 		err := syscall.Statfs(mountPath, &stat)
 		if err != nil {
-			return disks, fmt.Errorf("error getting disk stats: %s", mountPath)
+			return disks, fmt.Errorf("statsf %s: %w", mountPath, err)
 		}
 		blockSize := uint64(stat.Bsize)
 		disks = append(disks, Disk{

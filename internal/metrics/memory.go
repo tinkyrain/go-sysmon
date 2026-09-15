@@ -35,17 +35,13 @@ func (c *Collector) readMemory() (Memory, error) {
 			continue
 		}
 		if _, ok := memoryMetrics[name]; ok {
-			metricValue, err := strconv.ParseUint(parseValue(value), 10, 64)
+			metricValue, err := strconv.ParseUint(strings.Fields(value)[0], 10, 64)
 			if err != nil {
-				return collectData, fmt.Errorf("error parsing metric '%v' value: %w", name, err)
+				return collectData, fmt.Errorf("error parsing metric '%q' value: %w", name, err)
 			}
 			*memoryMetrics[name] = metricValue
 		}
 	}
 
 	return collectData, nil
-}
-
-func parseValue(str string) string {
-	return strings.Split(strings.TrimSpace(str), " ")[0]
 }

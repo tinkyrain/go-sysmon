@@ -1,6 +1,11 @@
 version: '3'
 
 tasks:
+  tests:
+    desc: Run tests
+    cmds:
+      - go test ./... --cover
+
   vet:
     desc: Start go vet
     cmds:

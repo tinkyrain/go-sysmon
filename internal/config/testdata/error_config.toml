@@ -1,0 +1,4 @@
+title = "Config with errros"
+
+interval = "12s"
+error: df

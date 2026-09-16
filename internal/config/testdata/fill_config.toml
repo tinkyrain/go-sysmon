@@ -1,0 +1,4 @@
+title = "Example full config file"
+
+interval = "8s"
+proc_root = "/test_proc/"

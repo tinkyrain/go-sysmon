@@ -6,41 +6,48 @@ import (
 )
 
 type Collector struct {
-	interval    time.Duration
-	fs          procfs.FileScanner
-	prevCPUTick CPUTick
+	fs           procfs.FileScanner
+	memoryReader MemoryReader
+	diskReader   DiskReader
+	cpuReader    CPUReader
 }
 
-func New(procRoot string, interval time.Duration) *Collector {
+func New(procRoot string) *Collector {
 	fs := procfs.New(procRoot)
 	return &Collector{
-		interval: interval,
-		fs:       fs,
+		fs: fs,
+		memoryReader: MemoryReader{
+			fs: fs,
+		},
+		diskReader: DiskReader{
+			fs: fs,
+		},
+		cpuReader: CPUReader{
+			fs: fs,
+		},
 	}
 }
 
 func (c *Collector) Collect() (Snapshot, error) {
-	memory, err := c.readMemory()
+	memory, err := c.memoryReader.Read()
 	if err != nil {
 		return Snapshot{}, err
 	}
 
-	disks, err := c.readDisks()
+	disks, err := c.diskReader.Read()
 	if err != nil {
 		return Snapshot{}, err
 	}
 
-	cpuTick, err := c.readCPUTick()
+	cpuTick, err := c.cpuReader.Read()
 	if err != nil {
 		return Snapshot{}, err
 	}
-
-	c.prevCPUTick = cpuTick
 
 	return Snapshot{
 		Time:     time.Now(),
 		Disks:    disks,
 		Memory:   memory,
-		CPUUsage: calculateCPUUsage(c.prevCPUTick, cpuTick),
+		CPUUsage: cpuTick,
 	}, nil
 }

@@ -20,29 +20,27 @@ func New(procRoot string, interval time.Duration) *Collector {
 }
 
 func (c *Collector) Collect() (Snapshot, error) {
-	snapshot := Snapshot{}
-
 	memory, err := c.readMemory()
 	if err != nil {
-		return snapshot, err
+		return Snapshot{}, err
 	}
 
 	disks, err := c.readDisks()
 	if err != nil {
-		return snapshot, err
+		return Snapshot{}, err
 	}
 
 	cpuTick, err := c.readCPUTick()
 	if err != nil {
-		return snapshot, err
+		return Snapshot{}, err
 	}
-
-	snapshot.Time = time.Now()
-	snapshot.Disks = disks
-	snapshot.Memory = memory
-	snapshot.CPUUsage = calculateCPUUsage(c.prevCPUTick, cpuTick)
 
 	c.prevCPUTick = cpuTick
 
-	return snapshot, nil
+	return Snapshot{
+		Time:     time.Now(),
+		Disks:    disks,
+		Memory:   memory,
+		CPUUsage: calculateCPUUsage(c.prevCPUTick, cpuTick),
+	}, nil
 }

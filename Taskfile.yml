@@ -9,7 +9,7 @@ tasks:
   vet:
     desc: Start go vet
     cmds:
-      - go vet
+      - go vet ./...
 
   lint:
     desc: Start lint project

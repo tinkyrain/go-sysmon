@@ -6,6 +6,12 @@ tasks:
     cmds:
       - go test ./... --cover
 
+  tests-with-report:
+    desc: Run tests with HTML report
+    cmds:
+      - go test ./... -coverprofile=coverage.out
+      - go tool cover -html=coverage.out
+
   vet:
     desc: Start go vet
     cmds:

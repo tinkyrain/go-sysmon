@@ -40,7 +40,11 @@ func (r *MemoryReader) Read() (Memory, error) {
 			continue
 		}
 		if _, ok := memoryMetrics[name]; ok {
-			metricValue, err := strconv.ParseUint(strings.Fields(value)[0], 10, 64)
+			fields := strings.Fields(value)
+			if len(fields) == 0 {
+				continue
+			}
+			metricValue, err := strconv.ParseUint(fields[0], 10, 64)
 			if err != nil {
 				return collectData, fmt.Errorf("error parsing metric %q value: %w", name, err)
 			}

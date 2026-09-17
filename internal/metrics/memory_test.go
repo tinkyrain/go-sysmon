@@ -2,20 +2,11 @@ package metrics
 
 import (
 	"go-sysmon/internal/procfs"
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-func procDir(t *testing.T, file, filecontent string) string {
-	t.Helper()
-	dir := t.TempDir()
-	require.NoError(t, os.WriteFile(filepath.Join(dir, file), []byte(filecontent), 0o600))
-	return dir
-}
 
 func TestReadMemorySuccess(t *testing.T) {
 	expected := Memory{
@@ -40,7 +31,7 @@ func TestReadMemoryBlankFile(t *testing.T) {
 		SwapTotal:     0,
 		SwapAvailable: 0,
 	}
-	tempDir := procDir(t, "meminfo", "")
+	tempDir := tempDirWithFile(t, "meminfo", "", 0o600)
 	fs := procfs.New(tempDir)
 	reader := MemoryReader{fs}
 
@@ -57,7 +48,7 @@ func TestReadMemoryNeedleMetricsNotFound(t *testing.T) {
 		SwapTotal:     0,
 		SwapAvailable: 0,
 	}
-	tempDir := procDir(t, "meminfo", "Buffers: 338020 kB\nCached: 1234 kB")
+	tempDir := tempDirWithFile(t, "meminfo", "Buffers: 338020 kB\nCached: 1234 kB", 0o600)
 	fs := procfs.New(tempDir)
 	reader := MemoryReader{fs}
 
@@ -68,7 +59,7 @@ func TestReadMemoryNeedleMetricsNotFound(t *testing.T) {
 }
 
 func TestReadMemoryFileNotFound(t *testing.T) {
-	tempDir := procDir(t, "meminfo_not_found", "")
+	tempDir := tempDirWithFile(t, "meminfo_not_found", "", 0o600)
 	fs := procfs.New(tempDir)
 	reader := MemoryReader{fs}
 
@@ -78,7 +69,7 @@ func TestReadMemoryFileNotFound(t *testing.T) {
 }
 
 func TestReadMemoryErrorConvertMetrics(t *testing.T) {
-	tempDir := procDir(t, "meminfo", "Buffers: 338020 kB\nMemAvailable: is_not_converted_string kB")
+	tempDir := tempDirWithFile(t, "meminfo", "Buffers: 338020 kB\nMemAvailable: is_not_converted_string kB", 0o600)
 	fs := procfs.New(tempDir)
 	reader := MemoryReader{fs}
 
@@ -94,7 +85,7 @@ func TestReadMemoryIncorrectMetricLine(t *testing.T) {
 		SwapTotal:     0,
 		SwapAvailable: 0,
 	}
-	tempDir := procDir(t, "meminfo", "Buffers 338020 kB\nMemAvailable 1321223 kB")
+	tempDir := tempDirWithFile(t, "meminfo", "Buffers 338020 kB\nMemAvailable 1321223 kB", 0o600)
 	fs := procfs.New(tempDir)
 	reader := MemoryReader{fs}
 
@@ -111,7 +102,7 @@ func TestReadMemoryBlankMetricRow(t *testing.T) {
 		SwapTotal:     0,
 		SwapAvailable: 0,
 	}
-	tempDir := procDir(t, "meminfo", "Buffers: 338020 kB\nMemAvailable:")
+	tempDir := tempDirWithFile(t, "meminfo", "Buffers: 338020 kB\nMemAvailable:", 0o600)
 	fs := procfs.New(tempDir)
 	reader := MemoryReader{fs}
 

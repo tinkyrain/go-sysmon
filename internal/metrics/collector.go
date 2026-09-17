@@ -2,11 +2,11 @@ package metrics
 
 import (
 	"go-sysmon/internal/procfs"
+	"go-sysmon/internal/statfs"
 	"time"
 )
 
 type Collector struct {
-	fs           procfs.FileScanner
 	memoryReader MemoryReader
 	diskReader   DiskReader
 	cpuReader    CPUReader
@@ -15,12 +15,12 @@ type Collector struct {
 func New(procRoot string) *Collector {
 	fs := procfs.New(procRoot)
 	return &Collector{
-		fs: fs,
 		memoryReader: MemoryReader{
 			fs: fs,
 		},
 		diskReader: DiskReader{
-			fs: fs,
+			fs:         fs,
+			statfsFunc: statfs.GetDirStatfs,
 		},
 		cpuReader: CPUReader{
 			fs: fs,

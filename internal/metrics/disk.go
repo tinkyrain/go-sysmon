@@ -1,14 +1,14 @@
 package metrics
 
 import (
-	"fmt"
 	"go-sysmon/internal/procfs"
 	"strings"
 	"syscall"
 )
 
 type DiskReader struct {
-	fs procfs.FileScanner
+	fs         procfs.FileScanner
+	statfsFunc func(string) (syscall.Statfs_t, error)
 }
 
 type Disk struct {
@@ -29,10 +29,9 @@ func (r *DiskReader) Read() ([]Disk, error) {
 	}
 
 	for _, mountPath := range mountPaths {
-		var stat syscall.Statfs_t
-		err := syscall.Statfs(mountPath, &stat)
+		stat, err := r.statfsFunc(mountPath)
 		if err != nil {
-			return disks, fmt.Errorf("statfs %s: %w", mountPath, err)
+			return disks, err
 		}
 		blockSize := uint64(stat.Bsize)
 		disks = append(disks, Disk{

@@ -1,4 +1,0 @@
-title = "invalid proc_root in config"
-
-interval = "1s"
-proc_root = ""

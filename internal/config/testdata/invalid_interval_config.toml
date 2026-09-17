@@ -1,4 +1,0 @@
-title = "invalid interval in config"
-
-interval = "3ms"
-proc_root = "/path"

@@ -39,7 +39,7 @@ func (c *Collector) Collect() (Snapshot, error) {
 		return Snapshot{}, err
 	}
 
-	cpuTick, err := c.cpuReader.Read()
+	cpuUsage, err := c.cpuReader.Read()
 	if err != nil {
 		return Snapshot{}, err
 	}
@@ -48,6 +48,6 @@ func (c *Collector) Collect() (Snapshot, error) {
 		Time:     time.Now(),
 		Disks:    disks,
 		Memory:   memory,
-		CPUUsage: cpuTick,
+		CPUUsage: cpuUsage,
 	}, nil
 }

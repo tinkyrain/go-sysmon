@@ -22,7 +22,7 @@ const mountFilename = "mounts"
 var diskPrefix = [3]string{"/dev/sd", "/dev/nvme", "/dev/vd"}
 
 func (r *DiskReader) Read() ([]Disk, error) {
-	var disks []Disk
+	disks := []Disk{}
 	mountPaths, err := r.getMounts(mountFilename)
 	if err != nil {
 		return disks, err

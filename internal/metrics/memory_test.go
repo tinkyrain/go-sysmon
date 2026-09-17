@@ -33,7 +33,7 @@ func TestReadMemoryBlankFile(t *testing.T) {
 	}
 	tempDir := tempDirWithFile(t, "meminfo", "", 0o600)
 	fs := procfs.New(tempDir)
-	reader := MemoryReader{fs}
+	reader := MemoryReader{fs: fs}
 
 	readResult, err := reader.Read()
 
@@ -50,7 +50,7 @@ func TestReadMemoryNeedleMetricsNotFound(t *testing.T) {
 	}
 	tempDir := tempDirWithFile(t, "meminfo", "Buffers: 338020 kB\nCached: 1234 kB", 0o600)
 	fs := procfs.New(tempDir)
-	reader := MemoryReader{fs}
+	reader := MemoryReader{fs: fs}
 
 	readResult, err := reader.Read()
 
@@ -61,7 +61,7 @@ func TestReadMemoryNeedleMetricsNotFound(t *testing.T) {
 func TestReadMemoryFileNotFound(t *testing.T) {
 	tempDir := tempDirWithFile(t, "meminfo_not_found", "", 0o600)
 	fs := procfs.New(tempDir)
-	reader := MemoryReader{fs}
+	reader := MemoryReader{fs: fs}
 
 	_, err := reader.Read()
 
@@ -71,7 +71,7 @@ func TestReadMemoryFileNotFound(t *testing.T) {
 func TestReadMemoryErrorConvertMetrics(t *testing.T) {
 	tempDir := tempDirWithFile(t, "meminfo", "Buffers: 338020 kB\nMemAvailable: is_not_converted_string kB", 0o600)
 	fs := procfs.New(tempDir)
-	reader := MemoryReader{fs}
+	reader := MemoryReader{fs: fs}
 
 	_, err := reader.Read()
 
@@ -87,7 +87,7 @@ func TestReadMemoryIncorrectMetricLine(t *testing.T) {
 	}
 	tempDir := tempDirWithFile(t, "meminfo", "Buffers 338020 kB\nMemAvailable 1321223 kB", 0o600)
 	fs := procfs.New(tempDir)
-	reader := MemoryReader{fs}
+	reader := MemoryReader{fs: fs}
 
 	readResult, err := reader.Read()
 
@@ -104,7 +104,7 @@ func TestReadMemoryBlankMetricRow(t *testing.T) {
 	}
 	tempDir := tempDirWithFile(t, "meminfo", "Buffers: 338020 kB\nMemAvailable:", 0o600)
 	fs := procfs.New(tempDir)
-	reader := MemoryReader{fs}
+	reader := MemoryReader{fs: fs}
 
 	readResult, err := reader.Read()
 

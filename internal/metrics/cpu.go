@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"go-sysmon/internal/procfs"
+	"math"
 	"strconv"
 	"strings"
 )
@@ -21,6 +22,8 @@ type CPUTick struct {
 
 const statFilename = "stat"
 const cpuParamName = "cpu"
+
+var ErrFewMetricsCountForParsing = errors.New("parsing CPU ticks need 10 metrics")
 
 func (r *CPUReader) Read() (float64, error) {
 	data, err := r.fs.ScanRows(statFilename)
@@ -44,7 +47,7 @@ func (r *CPUReader) Read() (float64, error) {
 	}
 
 	if len(cpuTickMetricsRows) == 0 {
-		return 0, errors.New("not found cpu row")
+		return 0, nil
 	}
 
 	tickMetrics, err := parseCPUTick(cpuTickMetricsRows)
@@ -84,12 +87,13 @@ func calculateCPUUsage(prev, cur CPUTick) float64 {
 		percentUsage = float64(nonIdleDelta) / float64(totalDelta) * 100
 	}
 
-	return percentUsage
+	shift := 10.0 * 10.0
+	return math.Round(percentUsage*shift) / shift
 }
 
 func parseCPUTick(metrics []string) (map[string]uint64, error) {
 	if len(metrics) < 10 {
-		return map[string]uint64{}, errors.New("parsing CPU ticks need 10 metrics")
+		return map[string]uint64{}, ErrFewMetricsCountForParsing
 	}
 	converted := make([]uint64, 0, len(metrics))
 	for _, value := range metrics {

@@ -25,7 +25,7 @@ func run() error {
 		return err
 	}
 
-	collector := metrics.New(cfg.ProcRoot, cfg.Interval)
+	collector := metrics.New(cfg.ProcRoot)
 	snapshot, err := collector.Collect()
 	if err != nil {
 		return err

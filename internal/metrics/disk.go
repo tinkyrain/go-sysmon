@@ -1,11 +1,15 @@
 package metrics
 
 import (
-	"fmt"
 	"go-sysmon/internal/procfs"
 	"strings"
 	"syscall"
 )
+
+type DiskReader struct {
+	fs         procfs.FileScanner
+	statfsFunc func(string) (syscall.Statfs_t, error)
+}
 
 type Disk struct {
 	Mount     string
@@ -17,18 +21,17 @@ const mountFilename = "mounts"
 
 var diskPrefix = [3]string{"/dev/sd", "/dev/nvme", "/dev/vd"}
 
-func (c *Collector) readDisks() ([]Disk, error) {
-	var disks []Disk
-	mountPaths, err := getMounts(c.fs, mountFilename)
+func (r *DiskReader) Read() ([]Disk, error) {
+	disks := []Disk{}
+	mountPaths, err := r.getMounts(mountFilename)
 	if err != nil {
 		return disks, err
 	}
 
 	for _, mountPath := range mountPaths {
-		var stat syscall.Statfs_t
-		err := syscall.Statfs(mountPath, &stat)
+		stat, err := r.statfsFunc(mountPath)
 		if err != nil {
-			return disks, fmt.Errorf("statsf %s: %w", mountPath, err)
+			return disks, err
 		}
 		blockSize := uint64(stat.Bsize)
 		disks = append(disks, Disk{
@@ -41,8 +44,8 @@ func (c *Collector) readDisks() ([]Disk, error) {
 	return disks, nil
 }
 
-func getMounts(scanner procfs.FileScanner, filename string) ([]string, error) {
-	mountData, err := scanner.ScanRows(filename)
+func (r *DiskReader) getMounts(filename string) ([]string, error) {
+	mountData, err := r.fs.ScanRows(filename)
 	if err != nil {
 		return nil, err
 	}

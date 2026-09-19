@@ -11,13 +11,18 @@ import (
 )
 
 type Config struct {
-	Interval time.Duration `toml:"interval"`  // Interval in seconds for collection metrics. Example "3s"
+	Interval time.Duration `toml:"interval"`  // Interval for collection metrics. Example "3s"
 	ProcRoot string        `toml:"proc_root"` // ProcRoot for metricsPath
 }
 
 const (
 	appName        = "go-sysmon"
 	configFileName = "config.toml"
+)
+
+var (
+	ErrInvalidInterval = errors.New("interval must be at least 100ms")
+	ErrBlankProcRoot   = errors.New("proc root path cannot be empty")
 )
 
 func defaultSettings() Config {
@@ -43,15 +48,15 @@ func Load(path string) (Config, error) {
 		if errors.Is(err, os.ErrNotExist) {
 			return config, nil // Error not return, but we are used default settings
 		}
-		return config, fmt.Errorf("failed to read config file %s: %w", path, err)
+		return Config{}, fmt.Errorf("failed to read config file %s: %w", path, err)
 	}
 
 	// Decode toml cfg in structure
 	if err := toml.Unmarshal(data, &config); err != nil {
-		return config, fmt.Errorf("failed to parse config file %s: %w", path, err)
+		return Config{}, fmt.Errorf("failed to parse config file %s: %w", path, err)
 	}
 	if err := validate(config); err != nil {
-		return config, fmt.Errorf("failed to validate config file %s: %w", path, err)
+		return Config{}, fmt.Errorf("failed to validate config file %s: %w", path, err)
 	}
 
 	return config, nil
@@ -59,10 +64,10 @@ func Load(path string) (Config, error) {
 
 func validate(config Config) error {
 	if config.Interval <= 100*time.Millisecond {
-		return fmt.Errorf("interval %v must be greater than 100ms", config.Interval)
+		return fmt.Errorf("%w: got %s", ErrInvalidInterval, config.Interval)
 	}
 	if config.ProcRoot == "" {
-		return errors.New("path cannot be empty")
+		return ErrBlankProcRoot
 	}
 	return nil
 }

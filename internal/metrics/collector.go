@@ -2,47 +2,52 @@ package metrics
 
 import (
 	"go-sysmon/internal/procfs"
+	"go-sysmon/internal/statfs"
 	"time"
 )
 
 type Collector struct {
-	interval    time.Duration
-	fs          procfs.FileScanner
-	prevCPUTick CPUTick
+	memoryReader MemoryReader
+	diskReader   DiskReader
+	cpuReader    CPUReader
 }
 
-func New(procRoot string, interval time.Duration) *Collector {
+func New(procRoot string) *Collector {
 	fs := procfs.New(procRoot)
 	return &Collector{
-		interval: interval,
-		fs:       fs,
+		memoryReader: MemoryReader{
+			fs: fs,
+		},
+		diskReader: DiskReader{
+			fs:         fs,
+			statfsFunc: statfs.GetDirStatfs,
+		},
+		cpuReader: CPUReader{
+			fs: fs,
+		},
 	}
 }
 
 func (c *Collector) Collect() (Snapshot, error) {
-	snapshot := Snapshot{}
-
-	memory, err := c.readMemory()
+	memory, err := c.memoryReader.Read()
 	if err != nil {
-		return snapshot, err
+		return Snapshot{}, err
 	}
 
-	disks, err := c.readDisks()
+	disks, err := c.diskReader.Read()
 	if err != nil {
-		return snapshot, err
+		return Snapshot{}, err
 	}
 
-	cpuTick, err := c.readCPUTick()
+	cpuUsage, err := c.cpuReader.Read()
 	if err != nil {
-		return snapshot, err
+		return Snapshot{}, err
 	}
 
-	snapshot.Time = time.Now()
-	snapshot.Disks = disks
-	snapshot.Memory = memory
-	snapshot.CPUUsage = calculateCPUUsage(c.prevCPUTick, cpuTick)
-
-	c.prevCPUTick = cpuTick
-
-	return snapshot, nil
+	return Snapshot{
+		Time:     time.Now(),
+		Disks:    disks,
+		Memory:   memory,
+		CPUUsage: cpuUsage,
+	}, nil
 }

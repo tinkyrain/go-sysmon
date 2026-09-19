@@ -1,0 +1,35 @@
+version: '3'
+
+tasks:
+  run:
+    desc: Start application
+    cmds:
+      - go run ./...
+
+  tests:
+    desc: Run tests
+    cmds:
+      - go test ./... --cover
+
+  tests-with-report:
+    desc: Run tests with HTML report
+    cmds:
+      - go test ./... -coverprofile=coverage.out
+      - go tool cover -html=coverage.out -o coverage.html
+
+  vet:
+    desc: Start go vet
+    cmds:
+      - go vet ./...
+
+  lint:
+    desc: Start lint project
+    cmds:
+      - golangci-lint run
+
+  validate:
+   desc: The entire code validation chain
+   cmds:
+     - go vet ./...
+     - golangci-lint run
+     - go test ./... --cover

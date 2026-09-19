@@ -2,11 +2,16 @@ package metrics
 
 import (
 	"fmt"
+	"go-sysmon/internal/procfs"
 	"strconv"
 	"strings"
 )
 
 const memoryFilename string = "meminfo"
+
+type MemoryReader struct {
+	fs procfs.FileScanner
+}
 
 type Memory struct {
 	Total         uint64
@@ -15,7 +20,7 @@ type Memory struct {
 	SwapAvailable uint64
 }
 
-func (c *Collector) readMemory() (Memory, error) {
+func (r *MemoryReader) Read() (Memory, error) {
 	collectData := Memory{}
 	memoryMetrics := map[string]*uint64{
 		"MemTotal":     &collectData.Total,
@@ -24,7 +29,7 @@ func (c *Collector) readMemory() (Memory, error) {
 		"SwapFree":     &collectData.SwapAvailable,
 	}
 
-	data, err := c.fs.ScanRows(memoryFilename)
+	data, err := r.fs.ScanRows(memoryFilename)
 	if err != nil {
 		return collectData, err
 	}
@@ -35,9 +40,13 @@ func (c *Collector) readMemory() (Memory, error) {
 			continue
 		}
 		if _, ok := memoryMetrics[name]; ok {
-			metricValue, err := strconv.ParseUint(strings.Fields(value)[0], 10, 64)
+			fields := strings.Fields(value)
+			if len(fields) == 0 {
+				continue
+			}
+			metricValue, err := strconv.ParseUint(fields[0], 10, 64)
 			if err != nil {
-				return collectData, fmt.Errorf("error parsing metric '%q' value: %w", name, err)
+				return collectData, fmt.Errorf("error parsing metric %q value: %w", name, err)
 			}
 			*memoryMetrics[name] = metricValue
 		}

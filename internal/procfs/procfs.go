@@ -15,12 +15,14 @@ func New(path string) FileScanner {
 }
 
 func (fs FileScanner) ScanRows(filename string) ([]string, error) {
-	var lines []string
+	lines := []string{}
 	f, err := os.Open(filepath.Join(fs.path, filename))
 	if err != nil {
 		return lines, err
 	}
-	defer f.Close()
+	defer func() {
+		_ = f.Close()
+	}()
 
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {

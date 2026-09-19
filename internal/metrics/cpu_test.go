@@ -188,3 +188,71 @@ func TestParseCPUTickParsingValueError(t *testing.T) {
 	assert.ErrorContains(t, err, "parsing cpu metric")
 	assert.Equal(t, expected, parseResult)
 }
+
+func TestCalculateCPUUsageSuccess(t *testing.T) {
+	var expected float64 = 50
+	curCPUTick := CPUTick{
+		Total:   100,
+		Idle:    250,
+		NonIdle: 350,
+	}
+	prevCPCUTick := CPUTick{
+		Total:   80,
+		Idle:    200,
+		NonIdle: 300,
+	}
+
+	usage := calculateCPUUsage(prevCPCUTick, curCPUTick)
+
+	assert.Equal(t, expected, usage)
+}
+
+func TestCalculateCPUUsagePrevTickIsBlank(t *testing.T) {
+	var expected float64 = 0
+	curCPUTick := CPUTick{
+		Total:   100,
+		Idle:    250,
+		NonIdle: 350,
+	}
+	prevCPCUTick := CPUTick{}
+
+	usage := calculateCPUUsage(prevCPCUTick, curCPUTick)
+
+	assert.Equal(t, expected, usage)
+}
+
+func TestCalculateCPUUsagePrevTickGreaterCurrent(t *testing.T) {
+	var expected float64 = 0
+	curCPUTick := CPUTick{
+		Total:   80,
+		Idle:    200,
+		NonIdle: 300,
+	}
+	prevCPCUTick := CPUTick{
+		Total:   100,
+		Idle:    250,
+		NonIdle: 350,
+	}
+
+	usage := calculateCPUUsage(prevCPCUTick, curCPUTick)
+
+	assert.Equal(t, expected, usage)
+}
+
+func TestCalculateCPUUsageNonIdleTotalAndDeltaTotalIsZero(t *testing.T) {
+	var expected float64 = 0
+	curCPUTick := CPUTick{
+		Total:   80,
+		Idle:    200,
+		NonIdle: 300,
+	}
+	prevCPCUTick := CPUTick{
+		Total:   100,
+		Idle:    200,
+		NonIdle: 300,
+	}
+
+	usage := calculateCPUUsage(prevCPCUTick, curCPUTick)
+
+	assert.Equal(t, expected, usage)
+}

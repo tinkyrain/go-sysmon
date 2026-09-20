@@ -78,10 +78,10 @@ func TestCollectSuccess(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Equal(t, Memory{
-		Total:         13003440,
-		Available:     5121912,
-		SwapTotal:     4194300,
-		SwapAvailable: 3383196,
+		Total:         13315522560,
+		Available:     5244837888,
+		SwapTotal:     4294963200,
+		SwapAvailable: 3464392704,
 	}, snap.Memory)
 	assert.Equal(t, []Disk{
 		{Mount: "/", Total: 100 * 1024, Available: 40 * 1024},

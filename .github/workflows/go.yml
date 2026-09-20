@@ -20,13 +20,13 @@ jobs:
         cache: true
 
     - name: Install dependencies
-      run: go mod tidy
+      run: go mod download
 
-    - name: Vet
-      run: go vet ./...
-      
+    - name: Gofmt
+      run: gofmt -l .
+
     - name: Linter
       uses: golangci/golangci-lint-action@v6
 
     - name: Tests
-      run: go test ./... -cover -v
+      run: go test ./... -cover -v -race

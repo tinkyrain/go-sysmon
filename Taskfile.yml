@@ -17,11 +17,6 @@ tasks:
       - go test ./... -coverprofile=coverage.out
       - go tool cover -html=coverage.out -o coverage.html
 
-  vet:
-    desc: Start go vet
-    cmds:
-      - go vet ./...
-
   lint:
     desc: Start lint project
     cmds:
@@ -30,6 +25,5 @@ tasks:
   validate:
    desc: The entire code validation chain
    cmds:
-     - go vet ./...
      - golangci-lint run
      - go test ./... --cover

@@ -20,7 +20,7 @@ jobs:
         cache: true
 
     - name: Install dependencies
-      run: go mod install
+      run: go mod tidy
 
     - name: Vet
       run: go vet ./....

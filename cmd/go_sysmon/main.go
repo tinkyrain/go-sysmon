@@ -33,5 +33,11 @@ func run(ctx context.Context) error {
 		return err
 	}
 
-	return app.Run(ctx, cfg, ui.Preview)
+	dash, err := ui.NewDashboard()
+	if err != nil {
+		return err
+	}
+	defer dash.Stop()
+
+	return app.Run(ctx, cfg, dash.Render)
 }

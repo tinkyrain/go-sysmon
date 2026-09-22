@@ -47,10 +47,7 @@ func run(ctx context.Context) error {
 		return err
 	}
 
-	dash, err := ui.NewDashboard()
-	if err != nil {
-		return err
-	}
+	dash := ui.NewDashboard()
 	defer dash.Stop()
 
 	return app.Run(ctx, cfg, dash.Render)

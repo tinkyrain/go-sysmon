@@ -2,12 +2,13 @@ package ui
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"go-sysmon/internal/metrics"
 
 	"github.com/charmbracelet/lipgloss"
-	"github.com/pterm/pterm"
+	"golang.org/x/term"
 )
 
 var (
@@ -84,11 +85,11 @@ func render(s metrics.Snapshot) string {
 }
 
 func terminalSize() (int, int) {
-	w, h := pterm.GetTerminalWidth(), pterm.GetTerminalHeight()
-	if w <= 0 {
+	w, h, err := term.GetSize(int(os.Stdout.Fd()))
+	if w <= 0 || err != nil {
 		w = 80
 	}
-	if h <= 0 {
+	if h <= 0 || err != nil {
 		h = 24
 	}
 	return w, h

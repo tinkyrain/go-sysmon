@@ -48,7 +48,7 @@ func (r *MemoryReader) Read() (Memory, error) {
 			if err != nil {
 				return collectData, fmt.Errorf("error parsing metric %q value: %w", name, err)
 			}
-			*memoryMetrics[name] = metricValue
+			*memoryMetrics[name] = metricValue * 1024 // Kb in bytes
 		}
 	}
 

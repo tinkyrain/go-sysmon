@@ -17,7 +17,7 @@ builds:
 
 nfpms:
   - vendor: go-sysmon
-    maintainer: Svetlovskii Vladislav
+    maintainer: Svetlovskii Vladislav <t1nky132@mail.ru>
     description: TUI/GUI system monitor for linux
     homepage: https://github.com/tinkyrain/go-sysmon
     license: MIT

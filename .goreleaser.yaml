@@ -14,7 +14,15 @@ builds:
 nfpms:
   - vendor: go-sysmon
     maintainer: Svetlovskii Vladislav <t1nky132@mail.ru>
-    description: TUI/GUI system monitor for linux
+    description: TUI system monitor for linux
     homepage: https://github.com/tinkyrain/go-sysmon
     license: MIT
-    formats: [ deb ]
+    formats: [ deb, rpm, apk ]
+
+brews:
+  - repository:
+      owner: tinkyrain
+      name: homebrew-tap
+    homepage: https://github.com/tinkyrain/go-sysmon
+    description: TUI system monitor for Linux
+    license: MIT

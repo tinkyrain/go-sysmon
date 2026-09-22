@@ -1,13 +1,17 @@
 # Terminal system monitor for Linux
 CPU, memory and disk usage on one screen.
 
+<img src="https://github.com/tinkyrain/go-sysmon/blob/main/preview.gif?raw=true" width="900" alt="go-sysmon work example">
+
 ## Install
 
 Download the `.deb` for your architecture (amd64 or arm64) from
 [Releases](https://github.com/tinkyrain/go-sysmon/releases) and install it:
 
 ```bash
-sudo apt install ./go-sysmon_*_amd64.deb
+go install github.com/tinkyrain/go-sysmon/cmd/go-sysmon@latest   # or
+sudo apt install ./go-sysmon_*.deb                               # or
+brew install tinkyrain/tap/go-sysmon
 ```
 
 Or build from source (Go 1.24+):

@@ -18,11 +18,3 @@ nfpms:
     homepage: https://github.com/tinkyrain/go-sysmon
     license: MIT
     formats: [ deb, rpm, apk ]
-
-brews:
-  - repository:
-      owner: tinkyrain
-      name: homebrew-tap
-    homepage: https://github.com/tinkyrain/go-sysmon
-    description: TUI system monitor for Linux
-    license: MIT

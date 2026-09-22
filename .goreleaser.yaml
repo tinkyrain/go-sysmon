@@ -1,0 +1,24 @@
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - main: ./cmd/go_sysmon
+    binary: go-sysmon
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+    goarch:
+      - arm64
+      - amd64
+
+nfpms:
+  - vendor: go-sysmon
+    maintainer: Svetlovskii Vladislav
+    description: TUI/GUI system monitor for linux
+    homepage: https://github.com/tinkyrain/go-sysmon
+    license: MIT
+    formats: [ deb ]

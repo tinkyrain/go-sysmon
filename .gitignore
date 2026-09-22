@@ -19,3 +19,5 @@ go.work.sum
 .idea/
 .claude/
 bin/
+# Added by goreleaser init:
+dist/

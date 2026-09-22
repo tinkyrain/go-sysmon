@@ -5,7 +5,7 @@ import (
 	"os"
 	"strings"
 
-	"go-sysmon/internal/metrics"
+	"github.com/tinkyrain/go-sysmon/internal/metrics"
 
 	"github.com/charmbracelet/lipgloss"
 	"golang.org/x/term"

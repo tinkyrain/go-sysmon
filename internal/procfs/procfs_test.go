@@ -1,10 +1,11 @@
 package procfs_test
 
 import (
-	"go-sysmon/internal/procfs"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/tinkyrain/go-sysmon/internal/procfs"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

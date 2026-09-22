@@ -1,11 +1,12 @@
 package statfs_test
 
 import (
-	"go-sysmon/internal/statfs"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/tinkyrain/go-sysmon/internal/statfs"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

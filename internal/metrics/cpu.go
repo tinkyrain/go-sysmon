@@ -3,10 +3,11 @@ package metrics
 import (
 	"errors"
 	"fmt"
-	"go-sysmon/internal/procfs"
 	"math"
 	"strconv"
 	"strings"
+
+	"github.com/tinkyrain/go-sysmon/internal/procfs"
 )
 
 type CPUReader struct {

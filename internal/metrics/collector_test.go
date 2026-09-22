@@ -2,13 +2,14 @@ package metrics
 
 import (
 	"errors"
-	"go-sysmon/internal/procfs"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"syscall"
 	"testing"
 	"time"
+
+	"github.com/tinkyrain/go-sysmon/internal/procfs"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

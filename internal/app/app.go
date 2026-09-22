@@ -2,9 +2,10 @@ package app
 
 import (
 	"context"
-	"go-sysmon/internal/config"
-	"go-sysmon/internal/metrics"
 	"time"
+
+	"github.com/tinkyrain/go-sysmon/internal/config"
+	"github.com/tinkyrain/go-sysmon/internal/metrics"
 )
 
 func Run(ctx context.Context, cfg config.Config, preview func(snapshot metrics.Snapshot)) error {

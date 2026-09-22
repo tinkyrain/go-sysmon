@@ -1,8 +1,9 @@
 package metrics
 
 import (
-	"go-sysmon/internal/procfs"
 	"testing"
+
+	"github.com/tinkyrain/go-sysmon/internal/procfs"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

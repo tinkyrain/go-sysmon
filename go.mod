@@ -1,4 +1,4 @@
-module go-sysmon
+module github.com/tinkyrain/go-sysmon
 
 go 1.24.0
 

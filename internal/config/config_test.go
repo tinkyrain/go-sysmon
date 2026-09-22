@@ -1,11 +1,12 @@
 package config_test
 
 import (
-	"go-sysmon/internal/config"
 	"os"
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/tinkyrain/go-sysmon/internal/config"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

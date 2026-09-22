@@ -4,12 +4,13 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"go-sysmon/internal/app"
-	"go-sysmon/internal/config"
-	"go-sysmon/internal/ui"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/tinkyrain/go-sysmon/internal/app"
+	"github.com/tinkyrain/go-sysmon/internal/config"
+	"github.com/tinkyrain/go-sysmon/internal/ui"
 )
 
 var (

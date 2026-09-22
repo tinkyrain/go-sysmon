@@ -2,9 +2,10 @@ package metrics
 
 import (
 	"fmt"
-	"go-sysmon/internal/procfs"
 	"strconv"
 	"strings"
+
+	"github.com/tinkyrain/go-sysmon/internal/procfs"
 )
 
 const memoryFilename string = "meminfo"

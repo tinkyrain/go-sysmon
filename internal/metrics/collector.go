@@ -1,9 +1,10 @@
 package metrics
 
 import (
-	"go-sysmon/internal/procfs"
-	"go-sysmon/internal/statfs"
 	"time"
+
+	"github.com/tinkyrain/go-sysmon/internal/procfs"
+	"github.com/tinkyrain/go-sysmon/internal/statfs"
 )
 
 type Collector struct {

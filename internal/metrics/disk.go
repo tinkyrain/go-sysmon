@@ -1,9 +1,10 @@
 package metrics
 
 import (
-	"go-sysmon/internal/procfs"
 	"strings"
 	"syscall"
+
+	"github.com/tinkyrain/go-sysmon/internal/procfs"
 )
 
 type DiskReader struct {

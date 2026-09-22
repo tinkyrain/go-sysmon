@@ -2,8 +2,9 @@ package ui
 
 import (
 	"fmt"
-	"go-sysmon/internal/metrics"
 	"os"
+
+	"github.com/tinkyrain/go-sysmon/internal/metrics"
 )
 
 const (

@@ -28,7 +28,7 @@ jobs:
         run: test -z "$(gofmt -l .)"
 
       - name: Linter
-        uses: golangci/golangci-lint-action@v8
+        uses: golangci/golangci-lint-action@v9
 
   Test:
     runs-on: ubuntu-latest

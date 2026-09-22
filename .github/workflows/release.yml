@@ -21,6 +21,20 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Tidy
+        run:
+          - go mod tidy
+          - git diff --exit-code go.mod go.sum
+
+      - name: Gofmt
+        run: test -z "$(gofmt -l .)"
+
+      - name: Linter
+        uses: golangci/golangci-lint-action@v8
+
+      - name: Test
+        run: go test -v -race ./...
+
       - name: Go release
         uses: goreleaser/goreleaser-action@v6
         with:

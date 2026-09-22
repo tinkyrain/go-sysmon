@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"go-sysmon/internal/app"
 	"go-sysmon/internal/config"
@@ -18,7 +19,12 @@ var (
 )
 
 func main() {
-	fmt.Printf("Version %s, Commit: %s, Date: %s", version, commit, date)
+	showVersion := flag.Bool("version", false, "print version and exit")
+	flag.Parse()
+	if *showVersion {
+		fmt.Printf("go-sysmon %s (commit %s, built %s)\n", version, commit, date)
+		return
+	}
 
 	// Context with stop notify
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)

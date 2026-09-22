@@ -22,9 +22,9 @@ jobs:
           go-version-file: go.mod
 
       - name: Tidy
-        run:
-          - go mod tidy
-          - git diff --exit-code go.mod go.sum
+        run: |
+          go mod tidy
+          git diff --exit-code go.mod go.sum
 
       - name: Gofmt
         run: test -z "$(gofmt -l .)"

@@ -18,6 +18,8 @@ var (
 )
 
 func main() {
+	fmt.Printf("Version %s, Commit: %s, Date: %s", version, commit, date)
+
 	// Context with stop notify
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop() // stop needle for collect context resources

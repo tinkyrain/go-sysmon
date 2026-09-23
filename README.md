@@ -18,7 +18,7 @@ Or build from source (Go 1.24+):
 ```bash
 git clone https://github.com/tinkyrain/go-sysmon.git
 cd go-sysmon
-go build -o go-sysmon ./cmd/go_sysmon
+go build -o go-sysmon ./cmd/go-sysmon
 ```
 
 ## Usage

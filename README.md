@@ -10,8 +10,7 @@ Download the `.deb` for your architecture (amd64 or arm64) from
 
 ```bash
 go install github.com/tinkyrain/go-sysmon/cmd/go-sysmon@latest   # or
-sudo apt install ./go-sysmon_*.deb                               # or
-brew install tinkyrain/tap/go-sysmon
+sudo apt install ./go-sysmon_*.deb
 ```
 
 Or build from source (Go 1.24+):

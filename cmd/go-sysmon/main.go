@@ -11,6 +11,7 @@ import (
 
 	"github.com/tinkyrain/go-sysmon/internal/app"
 	"github.com/tinkyrain/go-sysmon/internal/config"
+	"github.com/tinkyrain/go-sysmon/internal/metrics"
 	"github.com/tinkyrain/go-sysmon/internal/ui"
 )
 
@@ -52,7 +53,9 @@ func run(ctx context.Context) error {
 	dash := ui.NewDashboard()
 	defer dash.Stop()
 
-	return app.Run(ctx, cfg, dash.Render)
+	collector := metrics.New(cfg.ProcRoot)
+
+	return app.Run(ctx, cfg, collector.Collect, dash.Render)
 }
 
 func versionString() string {

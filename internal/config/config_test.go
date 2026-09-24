@@ -3,6 +3,7 @@ package config_test
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 	"time"
 
@@ -10,6 +11,11 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+)
+
+const (
+	appName        = "go-sysmon"
+	configFileName = "config.toml"
 )
 
 func configPath(t *testing.T, filename, filecontent string, perm os.FileMode) string {
@@ -94,4 +100,40 @@ func TestConfigValidateProcRootValue(t *testing.T) {
 	path := configPath(t, "invalid_proc_root_config.toml", "interval = '1s'\nproc_root = ''", 0o600)
 	_, err := config.Load(path)
 	assert.ErrorIs(t, err, config.ErrBlankProcRoot)
+}
+
+func TestDefaultPathSuccess(t *testing.T) {
+	tmpDir := t.TempDir()
+
+	var expectedBase string
+
+	switch runtime.GOOS {
+	case "darwin":
+		t.Setenv("HOME", tmpDir)
+		expectedBase = filepath.Join(tmpDir, "Library", "Application Support")
+	case "windows":
+		t.Setenv("AppData", tmpDir)
+		expectedBase = tmpDir
+	default:
+		t.Setenv("XDG_CONFIG_HOME", tmpDir)
+		expectedBase = tmpDir
+	}
+
+	expected := filepath.Join(expectedBase, appName, configFileName)
+
+	result, err := config.DefaultPath()
+
+	require.NoError(t, err)
+	assert.Equal(t, expected, result)
+}
+
+func TestDefaultPathError(t *testing.T) {
+	t.Setenv("HOME", "")
+	t.Setenv("AppData", "")
+	t.Setenv("XDG_CONFIG_HOME", "")
+
+	result, err := config.DefaultPath()
+
+	assert.Equal(t, "", result)
+	assert.Error(t, err)
 }

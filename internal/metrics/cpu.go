@@ -62,7 +62,7 @@ func (r *CPUReader) Read() ([]CPUUsage, error) {
 		if len(fields) < 11 {
 			continue
 		}
-		if !strings.Contains(fields[0], cpuMetricPrefix) {
+		if !strings.HasPrefix(fields[0], cpuMetricPrefix) {
 			continue
 		}
 		lines = append(lines, fields)
@@ -126,8 +126,7 @@ func calculateCPUUsage(prev, cur CPUSample) float64 {
 		percentUsage = float64(nonIdleDelta) / float64(totalDelta) * 100
 	}
 
-	shift := 10.0 * 10.0
-	return math.Round(percentUsage*shift) / shift
+	return math.Round(percentUsage*100) / 100
 }
 
 func parseCPULine(line []string) (CPUTicks, error) {

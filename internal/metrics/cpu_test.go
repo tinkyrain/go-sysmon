@@ -109,7 +109,7 @@ func TestReadCPUWithoutNeedleLines(t *testing.T) {
 
 	readResult, err := cpuReader.Read()
 
-	assert.Error(t, err, ErrNoCPULines)
+	assert.ErrorIs(t, err, ErrNoCPULines)
 	assert.Equal(t, expectedCPUUsages, readResult)
 }
 
@@ -128,11 +128,16 @@ func TestReadCPUFileNotFound(t *testing.T) {
 	assert.Equal(t, expectedCPUUsages, readResult)
 }
 
-func TestReadCPUIncorrectMetricLine(t *testing.T) {
-	expectedCPUUsages := []CPUUsage{}
+func TestReadCPUFilterIncorrectLines(t *testing.T) {
+	expectedCPUUsages := []CPUUsage{
+		{
+			ID:    "cpu0",
+			Usage: 0,
+		},
+	}
 	tempDir := tempDirWithFile(t,
 		"stat",
-		"cpu 28683 104 7543 6",
+		"cpu 28683 104 7543 6\ncpu0 17496 72 6050 650357 437 0 376 0 0 0",
 		0o600)
 	fs := procfs.New(tempDir)
 	cpuReader := CPUReader{
@@ -142,7 +147,7 @@ func TestReadCPUIncorrectMetricLine(t *testing.T) {
 
 	readResult, err := cpuReader.Read()
 
-	require.Error(t, err, ErrNoCPULines)
+	require.NoError(t, err)
 	assert.Equal(t, expectedCPUUsages, readResult)
 }
 
@@ -213,13 +218,13 @@ func TestCalculateCPUUsageSuccess(t *testing.T) {
 		Idle:    250,
 		NonIdle: 350,
 	}
-	prevCPCUTick := CPUSample{
+	prevCPUTick := CPUSample{
 		Total:   80,
 		Idle:    200,
 		NonIdle: 300,
 	}
 
-	usage := calculateCPUUsage(prevCPCUTick, curCPUTick)
+	usage := calculateCPUUsage(prevCPUTick, curCPUTick)
 
 	assert.Equal(t, expected, usage)
 }

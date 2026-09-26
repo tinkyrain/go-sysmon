@@ -11,69 +11,107 @@ import (
 )
 
 type CPUReader struct {
-	fs          procfs.FileScanner
-	prevCPUTick CPUTick
+	fs             procfs.FileScanner
+	prevCPUSamples map[string]CPUSample
 }
 
-type CPUTick struct {
+type CPUTicks struct {
+	ID        string
+	User      uint64
+	Nice      uint64
+	System    uint64
+	Idle      uint64
+	Iowait    uint64
+	Irq       uint64
+	Softirq   uint64
+	Steal     uint64
+	Guest     uint64
+	GuestNice uint64
+}
+
+type CPUSample struct {
 	Total   uint64
 	Idle    uint64
 	NonIdle uint64
 }
 
-const statFilename = "stat"
-const cpuParamName = "cpu"
+type CPUUsage struct {
+	ID    string
+	Usage float64
+}
+
+const cpuFilename = "stat"
+const cpuMetricPrefix = "cpu"
 
 var ErrFewMetricsCountForParsing = errors.New("parsing CPU ticks need 10 metrics")
+var ErrNoCPULines = errors.New("no cpu lines in file")
 
-func (r *CPUReader) Read() (float64, error) {
-	data, err := r.fs.ScanRows(statFilename)
+func (r *CPUReader) Read() ([]CPUUsage, error) {
+	result := []CPUUsage{}
+
+	data, err := r.fs.ScanRows(cpuFilename)
 	if err != nil {
-		return 0, err
+		return []CPUUsage{}, err
 	}
 
-	var cpuTickMetricsRows []string
+	var lines [][]string
 
 	for _, line := range data {
 		fields := strings.Fields(line)
-		// 11 because cpu has 11 metrics
+		// 11 because cpu has 11 ticks value
 		if len(fields) < 11 {
 			continue
 		}
-		if fields[0] != cpuParamName {
+		if !strings.Contains(fields[0], cpuMetricPrefix) {
 			continue
 		}
-		cpuTickMetricsRows = fields[1:]
-		break
+		lines = append(lines, fields)
 	}
 
-	if len(cpuTickMetricsRows) == 0 {
-		return 0, nil
+	if len(lines) == 0 {
+		return []CPUUsage{}, ErrNoCPULines
 	}
 
-	tickMetrics, err := parseCPUTick(cpuTickMetricsRows)
-	if err != nil {
-		return 0, err
+	samples := map[string]CPUSample{}
+
+	for _, line := range lines {
+		t, err := parseCPULine(line)
+		if err != nil {
+			return []CPUUsage{}, err
+		}
+
+		idle := t.Idle + t.Iowait
+		nonIdle := t.User + t.Nice + t.System + t.Irq +
+			t.Softirq + t.Steal
+		total := idle + nonIdle
+
+		sample := CPUSample{
+			Total:   total,
+			Idle:    idle,
+			NonIdle: nonIdle,
+		}
+
+		samples[t.ID] = sample
+
+		prevSample, ok := r.prevCPUSamples[t.ID]
+		var usage float64
+
+		if ok {
+			usage = calculateCPUUsage(prevSample, sample)
+		}
+
+		result = append(result, CPUUsage{
+			ID:    t.ID,
+			Usage: usage,
+		})
 	}
 
-	idle := tickMetrics["idle"] + tickMetrics["iowait"]
-	nonIdle := tickMetrics["user"] + tickMetrics["nice"] + tickMetrics["system"] + tickMetrics["irq"] +
-		tickMetrics["softirq"] + tickMetrics["steal"]
-	total := idle + nonIdle
+	r.prevCPUSamples = samples
 
-	var tick CPUTick
-
-	tick.Total = total
-	tick.Idle = idle
-	tick.NonIdle = nonIdle
-
-	cpuUsage := calculateCPUUsage(r.prevCPUTick, tick)
-	r.prevCPUTick = tick
-
-	return cpuUsage, nil
+	return result, nil
 }
 
-func calculateCPUUsage(prev, cur CPUTick) float64 {
+func calculateCPUUsage(prev, cur CPUSample) float64 {
 	var percentUsage float64
 
 	if prev.Total == 0 || cur.Idle < prev.Idle || cur.NonIdle < prev.NonIdle {
@@ -92,29 +130,32 @@ func calculateCPUUsage(prev, cur CPUTick) float64 {
 	return math.Round(percentUsage*shift) / shift
 }
 
-func parseCPUTick(metrics []string) (map[string]uint64, error) {
-	if len(metrics) < 10 {
-		return map[string]uint64{}, ErrFewMetricsCountForParsing
+func parseCPULine(line []string) (CPUTicks, error) {
+	if len(line) < 11 {
+		return CPUTicks{}, ErrFewMetricsCountForParsing
 	}
-	converted := make([]uint64, 0, len(metrics))
-	for _, value := range metrics {
+	coreName := line[0]
+	line = line[1:]
+	converted := make([]uint64, 0, len(line))
+	for _, value := range line {
 		convertedValue, err := strconv.ParseUint(value, 10, 64)
 		if err != nil {
-			return map[string]uint64{}, fmt.Errorf("parsing cpu metric %q: %w", value, err)
+			return CPUTicks{}, fmt.Errorf("parsing cpu line %q: %w", value, err)
 		}
 		converted = append(converted, convertedValue)
 	}
 
-	return map[string]uint64{
-		"user":      converted[0],
-		"nice":      converted[1],
-		"system":    converted[2],
-		"idle":      converted[3],
-		"iowait":    converted[4],
-		"irq":       converted[5],
-		"softirq":   converted[6],
-		"steal":     converted[7],
-		"guest":     converted[8],
-		"guestNice": converted[9],
+	return CPUTicks{
+		ID:        coreName,
+		User:      converted[0],
+		Nice:      converted[1],
+		System:    converted[2],
+		Idle:      converted[3],
+		Iowait:    converted[4],
+		Irq:       converted[5],
+		Softirq:   converted[6],
+		Steal:     converted[7],
+		Guest:     converted[8],
+		GuestNice: converted[9],
 	}, nil
 }

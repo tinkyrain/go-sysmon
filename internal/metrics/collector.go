@@ -40,15 +40,15 @@ func (c *Collector) Collect() (Snapshot, error) {
 		return Snapshot{}, err
 	}
 
-	cpuUsage, err := c.cpuReader.Read()
+	cpuUsages, err := c.cpuReader.Read()
 	if err != nil {
 		return Snapshot{}, err
 	}
 
 	return Snapshot{
-		Time:     time.Now(),
-		Disks:    disks,
-		Memory:   memory,
-		CPUUsage: cpuUsage,
+		Time:      time.Now(),
+		Disks:     disks,
+		Memory:    memory,
+		CPUUsages: cpuUsages,
 	}, nil
 }

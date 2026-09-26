@@ -9,195 +9,211 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestReadCPUSuccessWithoutPrevTick(t *testing.T) {
-	var expectedCPUUsage float64 = 0
-	expectedCPUPrevTick := CPUTick{
-		Total:   8125909,
-		Idle:    7746198,
-		NonIdle: 379711,
+func TestReadCPUSuccessWithoutPrevSample(t *testing.T) {
+	expectedCPUUsages := []CPUUsage{
+		CPUUsage{ID: "cpu", Usage: 0},
+		CPUUsage{ID: "cpu0", Usage: 0},
+		CPUUsage{ID: "cpu1", Usage: 0},
+	}
+	expectedCPUPrevSamples := map[string]CPUSample{
+		"cpu": CPUSample{
+			Total:   8125909,
+			Idle:    7746198,
+			NonIdle: 379711,
+		},
+		"cpu0": {
+			Total:   674788,
+			Idle:    650794,
+			NonIdle: 23994,
+		},
+		"cpu1": {
+			Total:   676907,
+			Idle:    661183,
+			NonIdle: 15724,
+		},
 	}
 	fs := procfs.New("testdata/")
 	cpuReader := CPUReader{
-		fs:          fs,
-		prevCPUTick: CPUTick{},
+		fs:             fs,
+		prevCPUSamples: map[string]CPUSample{},
 	}
 
 	readResult, err := cpuReader.Read()
 
 	require.NoError(t, err)
-	assert.Equal(t, readResult, expectedCPUUsage)
-	assert.Equal(t, expectedCPUPrevTick, cpuReader.prevCPUTick)
+	assert.Equal(t, expectedCPUUsages, readResult)
+	assert.Equal(t, expectedCPUPrevSamples, cpuReader.prevCPUSamples)
 }
 
-func TestReadCPUSuccessWithPrevTick(t *testing.T) {
-	expectedCPUUsage := 9.09
-	expectedCPUPrevTick := CPUTick{
-		Total:   8125909,
-		Idle:    7746198,
-		NonIdle: 379711,
+func TestReadCPUSuccessWithPrevSample(t *testing.T) {
+	expectedCPUUsages := []CPUUsage{
+		CPUUsage{ID: "cpu", Usage: 9.09},
+		CPUUsage{ID: "cpu0", Usage: 16.11},
+		CPUUsage{ID: "cpu1", Usage: 7.44},
 	}
+	expectedCPUPrevSamples := map[string]CPUSample{
+		"cpu": CPUSample{
+			Total:   8125909,
+			Idle:    7746198,
+			NonIdle: 379711,
+		},
+		"cpu0": {
+			Total:   674788,
+			Idle:    650794,
+			NonIdle: 23994,
+		},
+		"cpu1": {
+			Total:   676907,
+			Idle:    661183,
+			NonIdle: 15724,
+		},
+	}
+
 	fs := procfs.New("testdata/")
 	cpuReader := CPUReader{
 		fs: fs,
-		prevCPUTick: CPUTick{
-			Total:   7746198,
-			Idle:    6746198,
-			NonIdle: 279711,
+		prevCPUSamples: map[string]CPUSample{
+			"cpu": CPUSample{
+				Total:   7746198,
+				Idle:    6746198,
+				NonIdle: 279711,
+			},
+			"cpu0": CPUSample{
+				Total:   650000,
+				Idle:    630000,
+				NonIdle: 20000,
+			},
+			"cpu1": CPUSample{
+				Total:   600000,
+				Idle:    590000,
+				NonIdle: 10000,
+			},
 		},
 	}
 
 	readResult, err := cpuReader.Read()
 
 	require.NoError(t, err)
-	assert.Equal(t, readResult, expectedCPUUsage)
-	assert.Equal(t, expectedCPUPrevTick, cpuReader.prevCPUTick)
+	assert.Equal(t, expectedCPUUsages, readResult)
+	assert.Equal(t, expectedCPUPrevSamples, cpuReader.prevCPUSamples)
 }
 
-func TestReadCPUBlankFile(t *testing.T) {
-	var expected float64 = 0
+func TestReadCPUWithoutNeedleLines(t *testing.T) {
+	expectedCPUUsages := []CPUUsage{}
 	tempDir := tempDirWithFile(t, "stat", "", 0o600)
 	fs := procfs.New(tempDir)
 	cpuReader := CPUReader{
-		fs:          fs,
-		prevCPUTick: CPUTick{},
+		fs:             fs,
+		prevCPUSamples: map[string]CPUSample{},
 	}
 
 	readResult, err := cpuReader.Read()
 
-	assert.NoError(t, err)
-	assert.Equal(t, expected, readResult)
-}
-
-func TestReadCPUNeedleMetricsNotFound(t *testing.T) {
-	var expectedCPUUsage float64 = 0
-	expectedCPUPrevTick := CPUTick{
-		Total:   0,
-		Idle:    0,
-		NonIdle: 0,
-	}
-	tempDir := tempDirWithFile(t,
-		"stat",
-		"cpu10 28683 104 7543 640187 301 0 10 0 0 0\ncpu11 17748 68 4300 655703 656 0 6 0 0 0",
-		0o600)
-	fs := procfs.New(tempDir)
-	cpuReader := CPUReader{
-		fs:          fs,
-		prevCPUTick: CPUTick{},
-	}
-
-	readResult, err := cpuReader.Read()
-
-	require.NoError(t, err)
-	assert.Equal(t, readResult, expectedCPUUsage)
-	assert.Equal(t, expectedCPUPrevTick, cpuReader.prevCPUTick)
+	assert.Error(t, err, ErrNoCPULines)
+	assert.Equal(t, expectedCPUUsages, readResult)
 }
 
 func TestReadCPUFileNotFound(t *testing.T) {
-	var expectedCPUUsage float64 = 0
+	expectedCPUUsages := []CPUUsage{}
 	tempDir := tempDirWithFile(t, "stat312", "", 0o600)
 	fs := procfs.New(tempDir)
 	cpuReader := CPUReader{
-		fs:          fs,
-		prevCPUTick: CPUTick{},
+		fs:             fs,
+		prevCPUSamples: map[string]CPUSample{},
 	}
 
 	readResult, err := cpuReader.Read()
 
 	assert.Error(t, err)
-	assert.Equal(t, readResult, expectedCPUUsage)
+	assert.Equal(t, expectedCPUUsages, readResult)
 }
 
 func TestReadCPUIncorrectMetricLine(t *testing.T) {
-	var expectedCPUUsage float64 = 0
-	expectedCPUPrevTick := CPUTick{
-		Total:   0,
-		Idle:    0,
-		NonIdle: 0,
-	}
+	expectedCPUUsages := []CPUUsage{}
 	tempDir := tempDirWithFile(t,
 		"stat",
 		"cpu 28683 104 7543 6",
 		0o600)
 	fs := procfs.New(tempDir)
 	cpuReader := CPUReader{
-		fs:          fs,
-		prevCPUTick: CPUTick{},
+		fs:             fs,
+		prevCPUSamples: map[string]CPUSample{},
 	}
 
 	readResult, err := cpuReader.Read()
 
-	require.NoError(t, err)
-	assert.Equal(t, readResult, expectedCPUUsage)
-	assert.Equal(t, expectedCPUPrevTick, cpuReader.prevCPUTick)
+	require.Error(t, err, ErrNoCPULines)
+	assert.Equal(t, expectedCPUUsages, readResult)
 }
 
 func TestReadCPUErrorConvertMetrics(t *testing.T) {
-	var expectedCPUUsage float64 = 0
+	expectedCPUUsages := []CPUUsage{}
 	tempDir := tempDirWithFile(t,
 		"stat",
 		"cpu  298830 test 75896 7741115 5083 0 1586 0 0 0",
 		0o600)
 	fs := procfs.New(tempDir)
 	cpuReader := CPUReader{
-		fs:          fs,
-		prevCPUTick: CPUTick{},
+		fs:             fs,
+		prevCPUSamples: map[string]CPUSample{},
 	}
 
 	readResult, err := cpuReader.Read()
 
 	require.Error(t, err)
-	assert.Equal(t, readResult, expectedCPUUsage)
+	assert.Equal(t, expectedCPUUsages, readResult)
 }
 
-func TestParseCPUTickSuccess(t *testing.T) {
-	metrics := []string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "0"}
-	expected := map[string]uint64{
-		"user":      1,
-		"nice":      2,
-		"system":    3,
-		"idle":      4,
-		"iowait":    5,
-		"irq":       6,
-		"softirq":   7,
-		"steal":     8,
-		"guest":     9,
-		"guestNice": 0,
+func TestParseCPULineSuccess(t *testing.T) {
+	metrics := []string{"ID", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0"}
+	expected := CPUTicks{
+		ID:        "ID",
+		User:      1,
+		Nice:      2,
+		System:    3,
+		Idle:      4,
+		Iowait:    5,
+		Irq:       6,
+		Softirq:   7,
+		Steal:     8,
+		Guest:     9,
+		GuestNice: 0,
 	}
 
-	parseResult, err := parseCPUTick(metrics)
+	parseResult, err := parseCPULine(metrics)
 
 	require.NoError(t, err)
-	assert.InDeltaMapValues(t, expected, parseResult, 0)
+	assert.Equal(t, expected, parseResult)
 }
 
-func TestParseCPUTickMetricsCountError(t *testing.T) {
+func TestParseCPULineCountError(t *testing.T) {
 	metrics := []string{"1", "2", "3", "4"}
-	expected := map[string]uint64{}
+	expected := CPUTicks{}
 
-	parseResult, err := parseCPUTick(metrics)
+	parseResult, err := parseCPULine(metrics)
 
 	assert.ErrorIs(t, err, ErrFewMetricsCountForParsing)
 	assert.Equal(t, expected, parseResult)
 }
 
-func TestParseCPUTickParsingValueError(t *testing.T) {
-	metrics := []string{"1", "2", "3", "test", "1", "2", "3", "test", "1324", "333"}
-	expected := map[string]uint64{}
+func TestParseCPULineParsingValueError(t *testing.T) {
+	metrics := []string{"ID", "1", "2", "3", "test", "1", "2", "3", "test", "1324", "333"}
+	expected := CPUTicks{}
 
-	parseResult, err := parseCPUTick(metrics)
+	parseResult, err := parseCPULine(metrics)
 
-	assert.ErrorContains(t, err, "parsing cpu metric")
+	assert.ErrorContains(t, err, "parsing cpu line")
 	assert.Equal(t, expected, parseResult)
 }
 
 func TestCalculateCPUUsageSuccess(t *testing.T) {
 	var expected float64 = 50
-	curCPUTick := CPUTick{
+	curCPUTick := CPUSample{
 		Total:   100,
 		Idle:    250,
 		NonIdle: 350,
 	}
-	prevCPCUTick := CPUTick{
+	prevCPCUTick := CPUSample{
 		Total:   80,
 		Idle:    200,
 		NonIdle: 300,
@@ -210,12 +226,12 @@ func TestCalculateCPUUsageSuccess(t *testing.T) {
 
 func TestCalculateCPUUsagePrevTickIsBlank(t *testing.T) {
 	var expected float64 = 0
-	curCPUTick := CPUTick{
+	curCPUTick := CPUSample{
 		Total:   100,
 		Idle:    250,
 		NonIdle: 350,
 	}
-	prevCPCUTick := CPUTick{}
+	prevCPCUTick := CPUSample{}
 
 	usage := calculateCPUUsage(prevCPCUTick, curCPUTick)
 
@@ -224,12 +240,12 @@ func TestCalculateCPUUsagePrevTickIsBlank(t *testing.T) {
 
 func TestCalculateCPUUsagePrevTickGreaterCurrent(t *testing.T) {
 	var expected float64 = 0
-	curCPUTick := CPUTick{
+	curCPUTick := CPUSample{
 		Total:   80,
 		Idle:    200,
 		NonIdle: 300,
 	}
-	prevCPCUTick := CPUTick{
+	prevCPCUTick := CPUSample{
 		Total:   100,
 		Idle:    250,
 		NonIdle: 350,
@@ -242,12 +258,12 @@ func TestCalculateCPUUsagePrevTickGreaterCurrent(t *testing.T) {
 
 func TestCalculateCPUUsageNonIdleTotalAndDeltaTotalIsZero(t *testing.T) {
 	var expected float64 = 0
-	curCPUTick := CPUTick{
+	curCPUTick := CPUSample{
 		Total:   80,
 		Idle:    200,
 		NonIdle: 300,
 	}
-	prevCPCUTick := CPUTick{
+	prevCPCUTick := CPUSample{
 		Total:   100,
 		Idle:    200,
 		NonIdle: 300,

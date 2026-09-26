@@ -60,7 +60,6 @@ func TestNew(t *testing.T) {
 	c := New("/proc")
 
 	require.NotNil(t, c)
-	// все ридеры смотрят в один и тот же procRoot
 	assert.Equal(t, procfs.New("/proc"), c.memoryReader.fs)
 	assert.Equal(t, procfs.New("/proc"), c.diskReader.fs)
 	assert.Equal(t, procfs.New("/proc"), c.cpuReader.fs)
@@ -78,16 +77,23 @@ func TestCollectSuccess(t *testing.T) {
 	snap, err := c.Collect()
 
 	require.NoError(t, err)
+
 	assert.Equal(t, Memory{
 		Total:         13315522560,
 		Available:     5244837888,
 		SwapTotal:     4294963200,
 		SwapAvailable: 3464392704,
 	}, snap.Memory)
+
 	assert.Equal(t, []Disk{
 		{Mount: "/", Total: 100 * 1024, Available: 40 * 1024},
 	}, snap.Disks)
-	assert.Zero(t, snap.CPUUsage)
+
+	assert.Equal(t, []CPUUsage{
+		{ID: "cpu", Usage: 0},
+		{ID: "cpu0", Usage: 0},
+	}, snap.CPUUsages)
+
 	assert.WithinDuration(t, time.Now(), snap.Time, time.Minute)
 }
 

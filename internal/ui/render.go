@@ -58,7 +58,8 @@ func render(s metrics.Snapshot) string {
 
 	bs := boxStyle.Width(boxW - 2)
 
-	cpu := bs.Render(sectionStyle.Render("CPU") + "\n\n" + gauge(s.CPUUsage, gaugeW))
+	// TODO: add more cores
+	cpu := bs.Render(sectionStyle.Render("CPU") + "\n\n" + gauge(s.CPUUsages[0].Usage, gaugeW))
 
 	mem := bs.Render(sectionStyle.Render("Memory") + "\n\n" +
 		meter("RAM", s.Memory.Total, s.Memory.Available, gaugeW) + "\n\n" +

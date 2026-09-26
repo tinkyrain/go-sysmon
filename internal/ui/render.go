@@ -46,6 +46,28 @@ func meter(label string, total, available uint64, gaugeW int) string {
 	}, "\n")
 }
 
+func cpuSection(cpu metrics.CPU, barW, maxCores int) string {
+	var b strings.Builder
+	b.WriteString(sectionStyle.Render("CPU"))
+	b.WriteString("\n\n" + cpuRow("AVG", cpu.TotalUsage, barW))
+
+	shown, extra := cpu.Cores, 0
+	if maxCores > 0 && len(cpu.Cores) > maxCores {
+		shown, extra = cpu.Cores[:maxCores], len(cpu.Cores)-maxCores
+	}
+	for _, u := range shown {
+		b.WriteString("\n\n" + cpuRow("c"+strings.TrimPrefix(u.ID, "cpu"), u.Usage, barW))
+	}
+	if extra > 0 {
+		b.WriteString("\n" + dimStyle.Render(fmt.Sprintf("+%d more", extra)))
+	}
+	return b.String()
+}
+
+func cpuRow(label string, usage float64, barW int) string {
+	return fmt.Sprintf("%-4s", label) + gauge(usage, barW)
+}
+
 func render(s metrics.Snapshot) string {
 	w, h := terminalSize()
 
@@ -58,7 +80,11 @@ func render(s metrics.Snapshot) string {
 
 	bs := boxStyle.Width(boxW - 2)
 
-	cpu := bs.Render(sectionStyle.Render("CPU") + "\n\n" + gauge(s.CPUUsage, gaugeW))
+	cpuBarW := max(gaugeW-4, 4) // room for the "cNN " label
+	// CPU column budget: (frame content h-4) - header(2) - box chrome(2) = h-8 rows;
+	// fixed rows (title+blank+"all"+"+N more") = 4; each core now takes 2 rows (blank+bar).
+	maxCores := max((h-12)/2, 2)
+	cpu := bs.Render(cpuSection(s.CPU, cpuBarW, maxCores))
 
 	mem := bs.Render(sectionStyle.Render("Memory") + "\n\n" +
 		meter("RAM", s.Memory.Total, s.Memory.Available, gaugeW) + "\n\n" +

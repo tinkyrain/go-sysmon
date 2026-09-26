@@ -22,17 +22,17 @@ type Memory struct {
 }
 
 func (r *MemoryReader) Read() (Memory, error) {
-	collectData := Memory{}
-	memoryMetrics := map[string]*uint64{
-		"MemTotal":     &collectData.Total,
-		"MemAvailable": &collectData.Available,
-		"SwapTotal":    &collectData.SwapTotal,
-		"SwapFree":     &collectData.SwapAvailable,
+	memory := Memory{}
+	metrics := map[string]*uint64{
+		"MemTotal":     &memory.Total,
+		"MemAvailable": &memory.Available,
+		"SwapTotal":    &memory.SwapTotal,
+		"SwapFree":     &memory.SwapAvailable,
 	}
 
 	data, err := r.fs.ScanRows(memoryFilename)
 	if err != nil {
-		return collectData, err
+		return Memory{}, err
 	}
 
 	for _, line := range data {
@@ -40,18 +40,18 @@ func (r *MemoryReader) Read() (Memory, error) {
 		if !ok {
 			continue
 		}
-		if _, ok := memoryMetrics[name]; ok {
+		if _, ok := metrics[name]; ok {
 			fields := strings.Fields(value)
 			if len(fields) == 0 {
 				continue
 			}
 			metricValue, err := strconv.ParseUint(fields[0], 10, 64)
 			if err != nil {
-				return collectData, fmt.Errorf("error parsing metric %q value: %w", name, err)
+				return Memory{}, fmt.Errorf("error parsing metric %q value: %w", name, err)
 			}
-			*memoryMetrics[name] = metricValue * 1024 // Kb in bytes
+			*metrics[name] = metricValue * 1024 // Kb in bytes
 		}
 	}
 
-	return collectData, nil
+	return memory, nil
 }

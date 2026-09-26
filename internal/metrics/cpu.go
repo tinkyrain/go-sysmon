@@ -52,7 +52,7 @@ var ErrFewMetricsCountForParsing = errors.New("parsing CPU ticks need 10 metrics
 var ErrNoCPULines = errors.New("no cpu lines in file")
 
 func (r *CPUReader) Read() (CPU, error) {
-	result := CPU{}
+	cpu := CPU{}
 
 	data, err := r.fs.ScanRows(cpuFilename)
 	if err != nil {
@@ -106,9 +106,9 @@ func (r *CPUReader) Read() (CPU, error) {
 		}
 
 		if t.ID == cpuMetricPrefix {
-			result.TotalUsage = usage
+			cpu.TotalUsage = usage
 		} else {
-			result.Cores = append(result.Cores, CPUUsage{
+			cpu.Cores = append(cpu.Cores, CPUUsage{
 				ID:    t.ID,
 				Usage: usage,
 			})
@@ -117,7 +117,7 @@ func (r *CPUReader) Read() (CPU, error) {
 
 	r.prevCPUSamples = samples
 
-	return result, nil
+	return cpu, nil
 }
 
 func calculateCPUUsage(prev, cur CPUSample) float64 {

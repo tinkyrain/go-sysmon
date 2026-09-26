@@ -89,10 +89,12 @@ func TestCollectSuccess(t *testing.T) {
 		{Mount: "/", Total: 100 * 1024, Available: 40 * 1024},
 	}, snap.Disks)
 
-	assert.Equal(t, []CPUUsage{
-		{ID: "cpu", Usage: 0},
-		{ID: "cpu0", Usage: 0},
-	}, snap.CPUUsages)
+	assert.Equal(t, CPU{
+		TotalUsage: 0,
+		Cores: []CPUUsage{
+			{ID: "cpu0", Usage: 0},
+		},
+	}, snap.CPU)
 
 	assert.WithinDuration(t, time.Now(), snap.Time, time.Minute)
 }

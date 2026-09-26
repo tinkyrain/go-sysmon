@@ -46,24 +46,14 @@ func meter(label string, total, available uint64, gaugeW int) string {
 	}, "\n")
 }
 
-func cpuSection(usages []metrics.CPUUsage, barW, maxCores int) string {
-	var overall metrics.CPUUsage
-	cores := make([]metrics.CPUUsage, 0, len(usages))
-	for _, u := range usages {
-		if u.ID == "cpu" {
-			overall = u
-			continue
-		}
-		cores = append(cores, u)
-	}
-
+func cpuSection(cpu metrics.CPU, barW, maxCores int) string {
 	var b strings.Builder
 	b.WriteString(sectionStyle.Render("CPU"))
-	b.WriteString("\n\n" + cpuRow("all", overall.Usage, barW))
+	b.WriteString("\n\n" + cpuRow("AVG", cpu.TotalUsage, barW))
 
-	shown, extra := cores, 0
-	if maxCores > 0 && len(cores) > maxCores {
-		shown, extra = cores[:maxCores], len(cores)-maxCores
+	shown, extra := cpu.Cores, 0
+	if maxCores > 0 && len(cpu.Cores) > maxCores {
+		shown, extra = cpu.Cores[:maxCores], len(cpu.Cores)-maxCores
 	}
 	for _, u := range shown {
 		b.WriteString("\n\n" + cpuRow("c"+strings.TrimPrefix(u.ID, "cpu"), u.Usage, barW))
@@ -94,7 +84,7 @@ func render(s metrics.Snapshot) string {
 	// CPU column budget: (frame content h-4) - header(2) - box chrome(2) = h-8 rows;
 	// fixed rows (title+blank+"all"+"+N more") = 4; each core now takes 2 rows (blank+bar).
 	maxCores := max((h-12)/2, 2)
-	cpu := bs.Render(cpuSection(s.CPUUsages, cpuBarW, maxCores))
+	cpu := bs.Render(cpuSection(s.CPU, cpuBarW, maxCores))
 
 	mem := bs.Render(sectionStyle.Render("Memory") + "\n\n" +
 		meter("RAM", s.Memory.Total, s.Memory.Available, gaugeW) + "\n\n" +

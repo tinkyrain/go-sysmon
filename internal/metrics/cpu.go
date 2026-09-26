@@ -40,18 +40,23 @@ type CPUUsage struct {
 	Usage float64
 }
 
+type CPU struct {
+	TotalUsage float64
+	Cores      []CPUUsage
+}
+
 const cpuFilename = "stat"
 const cpuMetricPrefix = "cpu"
 
 var ErrFewMetricsCountForParsing = errors.New("parsing CPU ticks need 10 metrics")
 var ErrNoCPULines = errors.New("no cpu lines in file")
 
-func (r *CPUReader) Read() ([]CPUUsage, error) {
-	result := []CPUUsage{}
+func (r *CPUReader) Read() (CPU, error) {
+	result := CPU{}
 
 	data, err := r.fs.ScanRows(cpuFilename)
 	if err != nil {
-		return []CPUUsage{}, err
+		return CPU{}, err
 	}
 
 	var lines [][]string
@@ -69,7 +74,7 @@ func (r *CPUReader) Read() ([]CPUUsage, error) {
 	}
 
 	if len(lines) == 0 {
-		return []CPUUsage{}, ErrNoCPULines
+		return CPU{}, ErrNoCPULines
 	}
 
 	samples := map[string]CPUSample{}
@@ -77,7 +82,7 @@ func (r *CPUReader) Read() ([]CPUUsage, error) {
 	for _, line := range lines {
 		t, err := parseCPULine(line)
 		if err != nil {
-			return []CPUUsage{}, err
+			return CPU{}, err
 		}
 
 		idle := t.Idle + t.Iowait
@@ -100,10 +105,14 @@ func (r *CPUReader) Read() ([]CPUUsage, error) {
 			usage = calculateCPUUsage(prevSample, sample)
 		}
 
-		result = append(result, CPUUsage{
-			ID:    t.ID,
-			Usage: usage,
-		})
+		if t.ID == cpuMetricPrefix {
+			result.TotalUsage = usage
+		} else {
+			result.Cores = append(result.Cores, CPUUsage{
+				ID:    t.ID,
+				Usage: usage,
+			})
+		}
 	}
 
 	r.prevCPUSamples = samples

@@ -18,7 +18,7 @@ func TestReadCPUSuccessWithoutPrevSample(t *testing.T) {
 		},
 	}
 	expectedCPUPrevSamples := map[string]CPUSample{
-		"cpu": CPUSample{
+		"cpu": {
 			Total:   8125909,
 			Idle:    7746198,
 			NonIdle: 379711,
@@ -56,7 +56,7 @@ func TestReadCPUSuccessWithPrevSample(t *testing.T) {
 		},
 	}
 	expectedCPUPrevSamples := map[string]CPUSample{
-		"cpu": CPUSample{
+		"cpu": {
 			Total:   8125909,
 			Idle:    7746198,
 			NonIdle: 379711,
@@ -77,17 +77,17 @@ func TestReadCPUSuccessWithPrevSample(t *testing.T) {
 	cpuReader := CPUReader{
 		fs: fs,
 		prevCPUSamples: map[string]CPUSample{
-			"cpu": CPUSample{
+			"cpu": {
 				Total:   7746198,
 				Idle:    6746198,
 				NonIdle: 279711,
 			},
-			"cpu0": CPUSample{
+			"cpu0": {
 				Total:   650000,
 				Idle:    630000,
 				NonIdle: 20000,
 			},
-			"cpu1": CPUSample{
+			"cpu1": {
 				Total:   600000,
 				Idle:    590000,
 				NonIdle: 10000,

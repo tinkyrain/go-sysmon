@@ -17,16 +17,32 @@ func Run(
 	ticker := time.NewTicker(cfg.Interval)
 	defer ticker.Stop()
 
+	err := capturePreview(collect, preview)
+	if err != nil {
+		return err
+	}
+
 	for {
 		select {
 		case <-ctx.Done(): // The code will be placed here, if a "notification" is received indicating that the application is stopping
 			return nil
 		case <-ticker.C: // Collect metrics
-			snapshot, err := collect()
+			err := capturePreview(collect, preview)
 			if err != nil {
 				return err
 			}
-			preview(snapshot)
 		}
 	}
+}
+
+func capturePreview(
+	collect func() (metrics.Snapshot, error),
+	preview func(snapshot metrics.Snapshot),
+) error {
+	snapshot, err := collect()
+	if err != nil {
+		return err
+	}
+	preview(snapshot)
+	return nil
 }

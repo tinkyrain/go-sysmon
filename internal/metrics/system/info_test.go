@@ -24,7 +24,7 @@ func TestReadInfoSuccess(t *testing.T) {
 	expected := Info{
 		Hostname: files[hostNameFilepath],
 		OS:       files[osTypeFilepath],
-		Kernel:   osReleaseFilepath,
+		Kernel:   files[osReleaseFilepath],
 		Arch:     runtime.GOARCH,
 	}
 

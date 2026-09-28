@@ -60,13 +60,13 @@ func parseLoadAvgLine(line string) (LoadAvg, error) {
 	if loadAvg.FifteenMin, err = strconv.ParseFloat(fields[2], 64); err != nil {
 		return LoadAvg{}, err
 	}
-	if loadAvg.LastPID, err = strconv.ParseUint(fields[2], 10, 64); err != nil {
+	if loadAvg.LastPID, err = strconv.ParseUint(fields[4], 10, 64); err != nil {
 		return LoadAvg{}, err
 	}
 
 	running, total, ok := strings.Cut(fields[3], "/")
 	if !ok {
-		return LoadAvg{}, nil
+		return LoadAvg{}, ErrInsufficientLoadAvgData
 	}
 
 	if loadAvg.RunningProcs, err = strconv.ParseUint(running, 10, 64); err != nil {

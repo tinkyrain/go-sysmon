@@ -8,13 +8,19 @@ import (
 	"github.com/tinkyrain/go-sysmon/internal/procfs"
 )
 
+func uptimeFiles() map[string]string {
+	return map[string]string{
+		"uptime": "509124.78 2025143.51",
+	}
+}
+
 func TestReadUptimeSuccess(t *testing.T) {
 	expected := Uptime{
 		Total: 509124.78,
 		Idle:  2025143.51,
 	}
 
-	fs := procfs.New("testdata/")
+	fs := procfs.New(TempDirWithFiles(t, uptimeFiles(), 0o755, 0o600))
 	reader := UptimeReader{fs: fs}
 
 	result, err := reader.Read()
@@ -26,7 +32,7 @@ func TestReadUptimeSuccess(t *testing.T) {
 func TestReadUptimeFileError(t *testing.T) {
 	expected := Uptime{}
 
-	filepath := tempDirWithFile(t, "uptime", "123 123", 0)
+	filepath := TempDirWithFiles(t, uptimeFiles(), 0, 0)
 	fs := procfs.New(filepath)
 	reader := UptimeReader{fs: fs}
 
@@ -39,7 +45,9 @@ func TestReadUptimeFileError(t *testing.T) {
 func TestReadUptimeBlankFileError(t *testing.T) {
 	expected := Uptime{}
 
-	filepath := tempDirWithFile(t, "uptime", "", 0o600)
+	files := uptimeFiles()
+	files["uptime"] = ""
+	filepath := TempDirWithFiles(t, files, 0o600, 0o600)
 	fs := procfs.New(filepath)
 	reader := UptimeReader{fs: fs}
 

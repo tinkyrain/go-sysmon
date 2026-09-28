@@ -8,6 +8,12 @@ import (
 	"github.com/tinkyrain/go-sysmon/internal/procfs"
 )
 
+func loadavgFiles() map[string]string {
+	return map[string]string{
+		"loadavg": "0.15 0.25 0.30 1/456 12345",
+	}
+}
+
 func TestReadLoadAvgSuccess(t *testing.T) {
 	expected := LoadAvg{
 		OneMin:       0.15,
@@ -17,7 +23,7 @@ func TestReadLoadAvgSuccess(t *testing.T) {
 		TotalProcs:   456,
 		LastPID:      12345,
 	}
-	fs := procfs.New("testdata/")
+	fs := procfs.New(TempDirWithFiles(t, loadavgFiles(), 0o755, 0o600))
 	reader := LoadAvgReader{fs: fs}
 
 	result, err := reader.Read()
@@ -29,7 +35,7 @@ func TestReadLoadAvgSuccess(t *testing.T) {
 func TestReadLoadAvgReadFileError(t *testing.T) {
 	expected := LoadAvg{}
 
-	filepath := tempDirWithFile(t, "loadavg", "123", 0)
+	filepath := TempDirWithFiles(t, loadavgFiles(), 0, 0)
 	fs := procfs.New(filepath)
 	reader := LoadAvgReader{fs: fs}
 
@@ -42,7 +48,10 @@ func TestReadLoadAvgReadFileError(t *testing.T) {
 func TestReadLoadAvgBlankFileError(t *testing.T) {
 	expected := LoadAvg{}
 
-	filepath := tempDirWithFile(t, "loadavg", "", 0o600)
+	files := loadavgFiles()
+	files["loadavg"] = ""
+
+	filepath := TempDirWithFiles(t, files, 0o755, 0o600)
 	fs := procfs.New(filepath)
 	reader := LoadAvgReader{fs: fs}
 

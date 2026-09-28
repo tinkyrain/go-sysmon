@@ -41,22 +41,19 @@ func (r *InfoReader) Read() (Info, error) {
 
 	info := Info{}
 	info.Arch = runtime.GOARCH
+	info.Hostname = "not found"
+	info.OS = "not found"
+	info.Kernel = "not found"
 
-	if len(hostnameFile) == 0 && hostnameFile[0] == "" {
-		info.Hostname = "not found"
-	} else {
+	if len(hostnameFile) != 0 {
 		info.Hostname = hostnameFile[0]
 	}
 
-	if len(osTypeFile) == 0 && osTypeFile[0] == "" {
-		info.OS = "not found"
-	} else {
+	if len(osTypeFile) != 0 {
 		info.OS = osTypeFile[0]
 	}
 
-	if len(osReleaseFile) == 0 && osReleaseFile[0] == "" {
-		info.Kernel = "not found"
-	} else {
+	if len(osReleaseFile) != 0 {
 		info.Kernel = osReleaseFile[0]
 	}
 

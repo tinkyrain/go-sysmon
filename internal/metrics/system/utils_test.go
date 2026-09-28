@@ -8,9 +8,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func tempDirWithFile(t *testing.T, file, filecontent string, perm os.FileMode) string {
+func TempDirWithFiles(
+	t *testing.T,
+	files map[string]string,
+	dirPerm os.FileMode,
+	filePerm os.FileMode,
+) string {
 	t.Helper()
 	dir := t.TempDir()
-	require.NoError(t, os.WriteFile(filepath.Join(dir, file), []byte(filecontent), perm))
+	for name, content := range files {
+		path := filepath.Join(dir, name)
+		require.NoError(t, os.MkdirAll(filepath.Dir(path), dirPerm))
+		require.NoError(t, os.WriteFile(path, []byte(content), filePerm))
+	}
 	return dir
 }

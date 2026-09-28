@@ -13,18 +13,18 @@ import (
 
 func infoFiles() map[string]string {
 	return map[string]string{
-		"sys/kernel/hostname":  "hostname",
-		"sys/kernel/osrelease": "osrelease",
-		"sys/kernel/ostype":    "ostype",
+		hostNameFilepath:  "hostname",
+		osReleaseFilepath: "osrelease",
+		osTypeFilepath:    "ostype",
 	}
 }
 
 func TestReadInfoSuccess(t *testing.T) {
 	files := infoFiles()
 	expected := Info{
-		Hostname: files["sys/kernel/hostname"],
-		OS:       files["sys/kernel/ostype"],
-		Kernel:   files["sys/kernel/osrelease"],
+		Hostname: files[hostNameFilepath],
+		OS:       files[osTypeFilepath],
+		Kernel:   osReleaseFilepath,
 		Arch:     runtime.GOARCH,
 	}
 

@@ -1,21 +1,12 @@
 package system
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tinkyrain/go-sysmon/internal/procfs"
 )
-
-func tempDirWithFile(t *testing.T, file, filecontent string, perm os.FileMode) string {
-	t.Helper()
-	dir := t.TempDir()
-	require.NoError(t, os.WriteFile(filepath.Join(dir, file), []byte(filecontent), perm))
-	return dir
-}
 
 func TestReadLoadAvgSuccess(t *testing.T) {
 	expected := LoadAvg{
@@ -75,6 +66,13 @@ func TestParseLoadAvgLineSuccess(t *testing.T) {
 
 	require.NoError(t, err)
 	assert.Equal(t, expected, result)
+}
+
+func TestParseLoadAvgLineIncorrectMetricsCountErr(t *testing.T) {
+	result, err := parseLoadAvgLine("123")
+
+	require.ErrorIs(t, err, ErrInsufficientLoadAvgData)
+	require.Equal(t, LoadAvg{}, result)
 }
 
 func TestParseLoadAvgLineParseMetricsError(t *testing.T) {

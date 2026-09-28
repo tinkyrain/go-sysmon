@@ -2,6 +2,7 @@ package system
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -45,10 +46,10 @@ func parseUptimeLine(line string) (Uptime, error) {
 	uptime := Uptime{}
 
 	if uptime.Total, err = strconv.ParseFloat(fields[0], 64); err != nil {
-		return Uptime{}, err
+		return Uptime{}, fmt.Errorf("parsing uptime value %q: %w", fields[0], err)
 	}
 	if uptime.Idle, err = strconv.ParseFloat(fields[1], 64); err != nil {
-		return Uptime{}, err
+		return Uptime{}, fmt.Errorf("parsing uptime value %q: %w", fields[1], err)
 	}
 
 	return uptime, nil

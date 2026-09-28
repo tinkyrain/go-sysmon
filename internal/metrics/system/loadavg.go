@@ -2,6 +2,7 @@ package system
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -23,10 +24,7 @@ type LoadAvg struct {
 	LastPID      uint64
 }
 
-var (
-	ErrEmptyLoadAvg            = errors.New("loadavg data is empty")
-	ErrInsufficientLoadAvgData = errors.New("insufficient loadavg data")
-)
+var ErrInsufficientLoadAvgData = errors.New("insufficient loadavg data")
 
 func (r *LoadAvgReader) Read() (LoadAvg, error) {
 	data, err := r.fs.ScanRows(loadAvgFilename)
@@ -35,7 +33,7 @@ func (r *LoadAvgReader) Read() (LoadAvg, error) {
 	}
 
 	if len(data) == 0 {
-		return LoadAvg{}, ErrEmptyLoadAvg
+		return LoadAvg{}, ErrInsufficientLoadAvgData
 	}
 
 	// data[0] - because /proc/loadavg has one row
@@ -52,16 +50,16 @@ func parseLoadAvgLine(line string) (LoadAvg, error) {
 	loadAvg := LoadAvg{}
 
 	if loadAvg.OneMin, err = strconv.ParseFloat(fields[0], 64); err != nil {
-		return LoadAvg{}, err
+		return LoadAvg{}, fmt.Errorf("parsing loadavg value %q: %w", fields[0], err)
 	}
 	if loadAvg.FiveMin, err = strconv.ParseFloat(fields[1], 64); err != nil {
-		return LoadAvg{}, err
+		return LoadAvg{}, fmt.Errorf("parsing loadavg value %q: %w", fields[1], err)
 	}
 	if loadAvg.FifteenMin, err = strconv.ParseFloat(fields[2], 64); err != nil {
-		return LoadAvg{}, err
+		return LoadAvg{}, fmt.Errorf("parsing loadavg value %q: %w", fields[2], err)
 	}
 	if loadAvg.LastPID, err = strconv.ParseUint(fields[4], 10, 64); err != nil {
-		return LoadAvg{}, err
+		return LoadAvg{}, fmt.Errorf("parsing loadavg value %q: %w", fields[4], err)
 	}
 
 	running, total, ok := strings.Cut(fields[3], "/")
@@ -70,10 +68,10 @@ func parseLoadAvgLine(line string) (LoadAvg, error) {
 	}
 
 	if loadAvg.RunningProcs, err = strconv.ParseUint(running, 10, 64); err != nil {
-		return LoadAvg{}, err
+		return LoadAvg{}, fmt.Errorf("parsing loadavg value %q: %w", running, err)
 	}
 	if loadAvg.TotalProcs, err = strconv.ParseUint(total, 10, 64); err != nil {
-		return LoadAvg{}, err
+		return LoadAvg{}, fmt.Errorf("parsing loadavg value %q: %w", total, err)
 	}
 
 	return loadAvg, nil

@@ -75,9 +75,11 @@ func TestParseUptimeLineParseMetricsError(t *testing.T) {
 	}
 
 	for _, line := range data {
-		result, err := parseUptimeLine(line)
+		t.Run(line, func(t *testing.T) {
+			result, err := parseUptimeLine(line)
 
-		require.Error(t, err)
-		require.Equal(t, Uptime{}, result)
+			require.Error(t, err)
+			require.Equal(t, Uptime{}, result)
+		})
 	}
 }

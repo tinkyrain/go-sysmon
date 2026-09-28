@@ -48,7 +48,7 @@ func TestReadLoadAvgBlankFileError(t *testing.T) {
 
 	result, err := reader.Read()
 
-	require.ErrorIs(t, err, ErrEmptyLoadAvg)
+	require.ErrorIs(t, err, ErrInsufficientLoadAvgData)
 	assert.Equal(t, expected, result)
 }
 
@@ -81,16 +81,17 @@ func TestParseLoadAvgLineParseMetricsError(t *testing.T) {
 		"0.15 test 0.30 1/456 12345",
 		"0.15 0.25 test 1/456 12345",
 		"0.15 0.25 0.30 1/456 test",
-		"0.15 0.25 0.30 1/456 test",
 		"0.15 0.25 0.30 test/456 12345",
 		"0.15 0.25 0.30 1/test 12345",
 		"0.15 0.25 0.30 test 12345",
 	}
 
 	for _, line := range data {
-		result, err := parseLoadAvgLine(line)
+		t.Run(line, func(t *testing.T) {
+			result, err := parseLoadAvgLine(line)
 
-		require.Error(t, err)
-		require.Equal(t, LoadAvg{}, result)
+			require.Error(t, err)
+			require.Equal(t, LoadAvg{}, result)
+		})
 	}
 }

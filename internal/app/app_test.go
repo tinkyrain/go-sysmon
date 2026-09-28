@@ -64,3 +64,28 @@ func TestRunCollectError(t *testing.T) {
 
 	assert.Error(t, error)
 }
+
+func TestRunCollectErrorInLoop(t *testing.T) {
+	config, err := config.Load("")
+	require.NoError(t, err)
+	config.Interval = 1 * time.Millisecond
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+
+	calls := 0
+	collect := func() (metrics.Snapshot, error) {
+		calls++
+		if calls == 1 {
+			return metrics.Snapshot{}, nil
+		}
+		return metrics.Snapshot{}, fmt.Errorf("Error")
+	}
+
+	preview := func(metrics.Snapshot) {}
+
+	err = app.Run(ctx, config, collect, preview)
+
+	assert.Error(t, err)
+	assert.GreaterOrEqual(t, calls, 2)
+}

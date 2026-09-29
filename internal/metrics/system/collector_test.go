@@ -49,3 +49,20 @@ func TestCollectSuccess(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, expected, result)
 }
+
+func TestCollectError(t *testing.T) {
+	for file := range systemFiles() {
+		t.Run(file, func(t *testing.T) {
+			files := systemFiles()
+			delete(files, file)
+
+			fs := procfs.New(tempDirWithFiles(t, files, 0o755, 0o600))
+			collector := New(fs)
+
+			result, err := collector.Collect()
+
+			require.Error(t, err)
+			assert.Equal(t, Stats{}, result)
+		})
+	}
+}

@@ -71,13 +71,14 @@ func TestReadInfoReadFileError(t *testing.T) {
 }
 
 func TestReadInfoBlankFile(t *testing.T) {
-	files := infoFiles()
-	files[hostnameFile] = ""
-
-	reader := infoReader{fs: procfs.New(tempDirWithFiles(t, files, 0o755, 0o600))}
-
-	result, err := reader.read()
-
-	require.ErrorIs(t, err, ErrEmptyFile)
-	assert.Equal(t, Info{}, result)
+	for file := range infoFiles() {
+		t.Run(file, func(t *testing.T) {
+			files := infoFiles()
+			files[file] = ""
+			reader := infoReader{fs: procfs.New(tempDirWithFiles(t, files, 0o755, 0o600))}
+			result, err := reader.read()
+			require.ErrorIs(t, err, ErrEmptyFile)
+			assert.Equal(t, Info{}, result)
+		})
+	}
 }

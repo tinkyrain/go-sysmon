@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TempDirWithFiles(
+func tempDirWithFiles(
 	t *testing.T,
 	files map[string]string,
 	dirPerm os.FileMode,

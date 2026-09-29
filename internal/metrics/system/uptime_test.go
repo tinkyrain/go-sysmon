@@ -1,6 +1,8 @@
 package system
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,7 +12,7 @@ import (
 
 func uptimeFiles() map[string]string {
 	return map[string]string{
-		"uptime": "509124.78 2025143.51",
+		uptimeFile: "509124.78 2025143.51",
 	}
 }
 
@@ -20,10 +22,10 @@ func TestReadUptimeSuccess(t *testing.T) {
 		Idle:  2025143.51,
 	}
 
-	fs := procfs.New(TempDirWithFiles(t, uptimeFiles(), 0o755, 0o600))
-	reader := UptimeReader{fs: fs}
+	fs := procfs.New(tempDirWithFiles(t, uptimeFiles(), 0o755, 0o600))
+	reader := uptimeReader{fs: fs}
 
-	result, err := reader.Read()
+	result, err := reader.read()
 
 	require.NoError(t, err)
 	assert.Equal(t, expected, result)
@@ -32,11 +34,13 @@ func TestReadUptimeSuccess(t *testing.T) {
 func TestReadUptimeFileError(t *testing.T) {
 	expected := Uptime{}
 
-	filepath := TempDirWithFiles(t, uptimeFiles(), 0, 0)
-	fs := procfs.New(filepath)
-	reader := UptimeReader{fs: fs}
+	dir := tempDirWithFiles(t, map[string]string{}, 0o755, 0o600)
+	require.NoError(t, os.Mkdir(filepath.Join(dir, uptimeFile), 0o755))
 
-	result, err := reader.Read()
+	fs := procfs.New(dir)
+	reader := uptimeReader{fs: fs}
+
+	result, err := reader.read()
 
 	require.Error(t, err)
 	assert.Equal(t, expected, result)
@@ -46,12 +50,12 @@ func TestReadUptimeBlankFileError(t *testing.T) {
 	expected := Uptime{}
 
 	files := uptimeFiles()
-	files["uptime"] = ""
-	filepath := TempDirWithFiles(t, files, 0o600, 0o600)
-	fs := procfs.New(filepath)
-	reader := UptimeReader{fs: fs}
+	files[uptimeFile] = ""
+	dir := tempDirWithFiles(t, files, 0o600, 0o600)
+	fs := procfs.New(dir)
+	reader := uptimeReader{fs: fs}
 
-	result, err := reader.Read()
+	result, err := reader.read()
 
 	require.ErrorIs(t, err, ErrInsufficientUptime)
 	assert.Equal(t, expected, result)

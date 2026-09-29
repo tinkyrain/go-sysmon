@@ -11,11 +11,11 @@ import (
 
 func systemFiles() map[string]string {
 	return map[string]string{
-		"sys/kernel/hostname":  "hostname",
-		"sys/kernel/osrelease": "osrelease",
-		"sys/kernel/ostype":    "ostype",
-		"loadavg":              "0.15 0.25 0.30 1/456 12345",
-		"uptime":               "509124.78 2025143.51",
+		hostnameFile:  "hostname",
+		osreleaseFile: "osrelease",
+		ostypeFile:    "ostype",
+		loadAvgFile:   "0.15 0.25 0.30 1/456 12345",
+		uptimeFile:    "509124.78 2025143.51",
 	}
 }
 
@@ -41,7 +41,7 @@ func TestCollectSuccess(t *testing.T) {
 		},
 	}
 
-	fs := procfs.New(TempDirWithFiles(t, systemFiles(), 0o755, 0o600))
+	fs := procfs.New(tempDirWithFiles(t, systemFiles(), 0o755, 0o600))
 	collector := New(fs)
 
 	result, err := collector.Collect()

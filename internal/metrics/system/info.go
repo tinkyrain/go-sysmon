@@ -7,12 +7,12 @@ import (
 )
 
 const (
-	osTypeFilepath    = "sys/kernel/ostype"
-	osReleaseFilepath = "sys/kernel/osrelease"
-	hostNameFilepath  = "sys/kernel/hostname"
+	ostypeFile    = "sys/kernel/ostype"
+	osreleaseFile = "sys/kernel/osrelease"
+	hostnameFile  = "sys/kernel/hostname"
 )
 
-type InfoReader struct {
+type infoReader struct {
 	fs procfs.FileScanner
 }
 
@@ -23,18 +23,18 @@ type Info struct {
 	Arch     string
 }
 
-func (r *InfoReader) Read() (Info, error) {
-	osTypeFile, err := r.fs.ScanRows(osTypeFilepath)
+func (r infoReader) read() (Info, error) {
+	ostype, err := r.fs.ScanRows(ostypeFile)
 	if err != nil {
 		return Info{}, err
 	}
 
-	osReleaseFile, err := r.fs.ScanRows(osReleaseFilepath)
+	osrelease, err := r.fs.ScanRows(osreleaseFile)
 	if err != nil {
 		return Info{}, err
 	}
 
-	hostnameFile, err := r.fs.ScanRows(hostNameFilepath)
+	hostname, err := r.fs.ScanRows(hostnameFile)
 	if err != nil {
 		return Info{}, err
 	}
@@ -45,16 +45,16 @@ func (r *InfoReader) Read() (Info, error) {
 	info.OS = "not found"
 	info.Kernel = "not found"
 
-	if len(hostnameFile) != 0 {
-		info.Hostname = hostnameFile[0]
+	if len(hostname) != 0 {
+		info.Hostname = hostname[0]
 	}
 
-	if len(osTypeFile) != 0 {
-		info.OS = osTypeFile[0]
+	if len(ostype) != 0 {
+		info.OS = ostype[0]
 	}
 
-	if len(osReleaseFile) != 0 {
-		info.Kernel = osReleaseFile[0]
+	if len(osrelease) != 0 {
+		info.Kernel = osrelease[0]
 	}
 
 	return info, nil

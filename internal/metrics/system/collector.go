@@ -3,31 +3,31 @@ package system
 import "github.com/tinkyrain/go-sysmon/internal/procfs"
 
 type Collector struct {
-	infoReader    InfoReader
-	loadAvgReader LoadAvgReader
-	uptimeReader  UptimeReader
+	infoReader    infoReader
+	loadAvgReader loadAvgReader
+	uptimeReader  uptimeReader
 }
 
 func New(fs procfs.FileScanner) Collector {
 	return Collector{
-		infoReader:    InfoReader{fs: fs},
-		loadAvgReader: LoadAvgReader{fs: fs},
-		uptimeReader:  UptimeReader{fs: fs},
+		infoReader:    infoReader{fs: fs},
+		loadAvgReader: loadAvgReader{fs: fs},
+		uptimeReader:  uptimeReader{fs: fs},
 	}
 }
 
-func (c *Collector) Collect() (Stats, error) {
-	info, err := c.infoReader.Read()
+func (c Collector) Collect() (Stats, error) {
+	info, err := c.infoReader.read()
 	if err != nil {
 		return Stats{}, err
 	}
 
-	loadAvg, err := c.loadAvgReader.Read()
+	loadAvg, err := c.loadAvgReader.read()
 	if err != nil {
 		return Stats{}, err
 	}
 
-	uptime, err := c.uptimeReader.Read()
+	uptime, err := c.uptimeReader.read()
 	if err != nil {
 		return Stats{}, err
 	}

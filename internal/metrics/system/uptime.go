@@ -9,9 +9,9 @@ import (
 	"github.com/tinkyrain/go-sysmon/internal/procfs"
 )
 
-const uptimeFilename = "uptime"
+const uptimeFile = "uptime"
 
-type UptimeReader struct {
+type uptimeReader struct {
 	fs procfs.FileScanner
 }
 
@@ -22,8 +22,8 @@ type Uptime struct {
 
 var ErrInsufficientUptime = errors.New("insufficient uptime data")
 
-func (r *UptimeReader) Read() (Uptime, error) {
-	data, err := r.fs.ScanRows(uptimeFilename)
+func (r uptimeReader) read() (Uptime, error) {
+	data, err := r.fs.ScanRows(uptimeFile)
 	if err != nil {
 		return Uptime{}, err
 	}

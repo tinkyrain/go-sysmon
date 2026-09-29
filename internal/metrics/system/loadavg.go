@@ -9,9 +9,9 @@ import (
 	"github.com/tinkyrain/go-sysmon/internal/procfs"
 )
 
-const loadAvgFilename = "loadavg"
+const loadAvgFile = "loadavg"
 
-type LoadAvgReader struct {
+type loadAvgReader struct {
 	fs procfs.FileScanner
 }
 
@@ -24,16 +24,17 @@ type LoadAvg struct {
 	LastPID      uint64
 }
 
-var ErrInsufficientLoadAvgData = errors.New("insufficient loadavg data")
+var ErrInsufficientLoadAvg = errors.New("insufficient loadavg data")
+var ErrIncorrectMetricLoadAvg = errors.New("incorrect loadavg data")
 
-func (r *LoadAvgReader) Read() (LoadAvg, error) {
-	data, err := r.fs.ScanRows(loadAvgFilename)
+func (r loadAvgReader) read() (LoadAvg, error) {
+	data, err := r.fs.ScanRows(loadAvgFile)
 	if err != nil {
 		return LoadAvg{}, err
 	}
 
 	if len(data) == 0 {
-		return LoadAvg{}, ErrInsufficientLoadAvgData
+		return LoadAvg{}, ErrInsufficientLoadAvg
 	}
 
 	// data[0] - because /proc/loadavg has one row
@@ -43,7 +44,7 @@ func (r *LoadAvgReader) Read() (LoadAvg, error) {
 func parseLoadAvgLine(line string) (LoadAvg, error) {
 	fields := strings.Fields(line)
 	if len(fields) < 5 {
-		return LoadAvg{}, ErrInsufficientLoadAvgData
+		return LoadAvg{}, ErrInsufficientLoadAvg
 	}
 
 	var err error
@@ -64,7 +65,7 @@ func parseLoadAvgLine(line string) (LoadAvg, error) {
 
 	running, total, ok := strings.Cut(fields[3], "/")
 	if !ok {
-		return LoadAvg{}, ErrInsufficientLoadAvgData
+		return LoadAvg{}, fmt.Errorf("parsing loadavg value %q: %w", fields[3], ErrIncorrectMetricLoadAvg)
 	}
 
 	if loadAvg.RunningProcs, err = strconv.ParseUint(running, 10, 64); err != nil {

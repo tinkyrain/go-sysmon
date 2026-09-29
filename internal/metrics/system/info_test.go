@@ -78,8 +78,6 @@ func TestReadInfoBlankFile(t *testing.T) {
 
 	result, err := reader.read()
 
-	require.NoError(t, err)
-	assert.Equal(t, "not found", result.Hostname)
-	assert.Equal(t, "ostype", result.OS)
-	assert.Equal(t, "osrelease", result.Kernel)
+	require.ErrorIs(t, err, ErrEmptyFile)
+	assert.Equal(t, Info{}, result)
 }

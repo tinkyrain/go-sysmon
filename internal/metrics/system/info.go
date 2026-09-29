@@ -1,6 +1,8 @@
 package system
 
 import (
+	"errors"
+	"fmt"
 	"runtime"
 
 	"github.com/tinkyrain/go-sysmon/internal/procfs"
@@ -23,6 +25,8 @@ type Info struct {
 	Arch     string
 }
 
+var ErrEmptyFile = errors.New("file is empty")
+
 func (r infoReader) read() (Info, error) {
 	ostype, err := r.fs.ScanRows(ostypeFile)
 	if err != nil {
@@ -39,23 +43,22 @@ func (r infoReader) read() (Info, error) {
 		return Info{}, err
 	}
 
-	info := Info{}
-	info.Arch = runtime.GOARCH
-	info.Hostname = "not found"
-	info.OS = "not found"
-	info.Kernel = "not found"
-
-	if len(hostname) != 0 {
-		info.Hostname = hostname[0]
+	if len(hostname) == 0 {
+		return Info{}, fmt.Errorf("parsing file error %q: %w", hostnameFile, ErrEmptyFile)
 	}
 
-	if len(ostype) != 0 {
-		info.OS = ostype[0]
+	if len(ostype) == 0 {
+		return Info{}, fmt.Errorf("parsing file error %q: %w", ostypeFile, ErrEmptyFile)
 	}
 
-	if len(osrelease) != 0 {
-		info.Kernel = osrelease[0]
+	if len(osrelease) == 0 {
+		return Info{}, fmt.Errorf("parsing file error %q: %w", osreleaseFile, ErrEmptyFile)
 	}
 
-	return info, nil
+	return Info{
+		Arch:     runtime.GOARCH,
+		Hostname: hostname[0],
+		OS:       ostype[0],
+		Kernel:   osrelease[0],
+	}, nil
 }

@@ -44,15 +44,15 @@ func (r infoReader) read() (Info, error) {
 	}
 
 	if len(hostname) == 0 {
-		return Info{}, fmt.Errorf("parsing file error %q: %w", hostnameFile, ErrEmptyFile)
+		return Info{}, fmt.Errorf("parsing file %q error: %w", hostnameFile, ErrEmptyFile)
 	}
 
 	if len(ostype) == 0 {
-		return Info{}, fmt.Errorf("parsing file error %q: %w", ostypeFile, ErrEmptyFile)
+		return Info{}, fmt.Errorf("parsing file %q error: %w", ostypeFile, ErrEmptyFile)
 	}
 
 	if len(osrelease) == 0 {
-		return Info{}, fmt.Errorf("parsing file error %q: %w", osreleaseFile, ErrEmptyFile)
+		return Info{}, fmt.Errorf("parsing file %q error: %w", osreleaseFile, ErrEmptyFile)
 	}
 
 	return Info{

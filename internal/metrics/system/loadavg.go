@@ -24,8 +24,10 @@ type LoadAvg struct {
 	LastPID      uint64
 }
 
-var ErrInsufficientLoadAvg = errors.New("insufficient loadavg data")
-var ErrIncorrectMetricLoadAvg = errors.New("incorrect loadavg data")
+var (
+	ErrInsufficientLoadAvg    = errors.New("insufficient loadavg data")
+	ErrIncorrectLoadAvgMetric = errors.New("incorrect loadavg data")
+)
 
 func (r loadAvgReader) read() (LoadAvg, error) {
 	data, err := r.fs.ScanRows(loadAvgFile)
@@ -65,7 +67,7 @@ func parseLoadAvgLine(line string) (LoadAvg, error) {
 
 	running, total, ok := strings.Cut(fields[3], "/")
 	if !ok {
-		return LoadAvg{}, fmt.Errorf("parsing loadavg value %q: %w", fields[3], ErrIncorrectMetricLoadAvg)
+		return LoadAvg{}, fmt.Errorf("parsing loadavg value %q: %w", fields[3], ErrIncorrectLoadAvgMetric)
 	}
 
 	if loadAvg.RunningProcs, err = strconv.ParseUint(running, 10, 64); err != nil {

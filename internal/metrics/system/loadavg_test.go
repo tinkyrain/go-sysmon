@@ -3,6 +3,7 @@ package system
 import (
 	"os"
 	"path/filepath"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -35,23 +36,18 @@ func TestReadLoadAvgSuccess(t *testing.T) {
 }
 
 func TestReadLoadAvgReadFileError(t *testing.T) {
-	expected := LoadAvg{}
-
 	dir := tempDirWithFiles(t, map[string]string{}, 0o755, 0o600)
 	require.NoError(t, os.Mkdir(filepath.Join(dir, loadAvgFile), 0o755))
 
-	fs := procfs.New(dir)
-	reader := loadAvgReader{fs: fs}
+	reader := loadAvgReader{fs: procfs.New(dir)}
 
 	result, err := reader.read()
 
 	require.Error(t, err)
-	assert.Equal(t, expected, result)
+	assert.Equal(t, LoadAvg{}, result)
 }
 
 func TestReadLoadAvgBlankFileError(t *testing.T) {
-	expected := LoadAvg{}
-
 	files := loadavgFiles()
 	files[loadAvgFile] = ""
 
@@ -62,7 +58,7 @@ func TestReadLoadAvgBlankFileError(t *testing.T) {
 	result, err := reader.read()
 
 	require.ErrorIs(t, err, ErrInsufficientLoadAvg)
-	assert.Equal(t, expected, result)
+	assert.Equal(t, LoadAvg{}, result)
 }
 
 func TestParseLoadAvgLineSuccess(t *testing.T) {
@@ -91,25 +87,25 @@ func TestParseLoadAvgLineIncorrectMetricsCountErr(t *testing.T) {
 func TestParseLoadAvgLineIncorrectMetricError(t *testing.T) {
 	result, err := parseLoadAvgLine("0.15 0.25 0.30 test 12345")
 
-	require.ErrorIs(t, err, ErrIncorrectMetricLoadAvg)
+	require.ErrorIs(t, err, ErrIncorrectLoadAvgMetric)
 	require.Equal(t, LoadAvg{}, result)
 }
 
 func TestParseLoadAvgLineParseMetricsError(t *testing.T) {
-	data := []string{
-		"test 0.25 0.30 1/456 12345",
-		"0.15 test 0.30 1/456 12345",
-		"0.15 0.25 test 1/456 12345",
-		"0.15 0.25 0.30 1/456 test",
-		"0.15 0.25 0.30 test/456 12345",
-		"0.15 0.25 0.30 1/test 12345",
+	data := map[string]string{
+		"test_1": "test 0.25 0.30 1/456 12345",
+		"test_2": "0.15 test 0.30 1/456 12345",
+		"test_3": "0.15 0.25 test 1/456 12345",
+		"test_4": "0.15 0.25 0.30 1/456 test",
+		"test_5": "0.15 0.25 0.30 test/456 12345",
+		"test_6": "0.15 0.25 0.30 1/test 12345",
 	}
 
-	for _, line := range data {
-		t.Run(line, func(t *testing.T) {
+	for key, line := range data {
+		t.Run(key, func(t *testing.T) {
 			result, err := parseLoadAvgLine(line)
 
-			require.Error(t, err)
+			require.ErrorIs(t, err, strconv.ErrSyntax)
 			require.Equal(t, LoadAvg{}, result)
 		})
 	}

@@ -3,6 +3,7 @@ package system
 import (
 	"os"
 	"path/filepath"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -32,23 +33,18 @@ func TestReadUptimeSuccess(t *testing.T) {
 }
 
 func TestReadUptimeFileError(t *testing.T) {
-	expected := Uptime{}
-
 	dir := tempDirWithFiles(t, map[string]string{}, 0o755, 0o600)
 	require.NoError(t, os.Mkdir(filepath.Join(dir, uptimeFile), 0o755))
 
-	fs := procfs.New(dir)
-	reader := uptimeReader{fs: fs}
+	reader := uptimeReader{fs: procfs.New(dir)}
 
 	result, err := reader.read()
 
 	require.Error(t, err)
-	assert.Equal(t, expected, result)
+	assert.Equal(t, Uptime{}, result)
 }
 
 func TestReadUptimeBlankFileError(t *testing.T) {
-	expected := Uptime{}
-
 	files := uptimeFiles()
 	files[uptimeFile] = ""
 	dir := tempDirWithFiles(t, files, 0o600, 0o600)
@@ -57,8 +53,8 @@ func TestReadUptimeBlankFileError(t *testing.T) {
 
 	result, err := reader.read()
 
-	require.ErrorIs(t, err, ErrInsufficientUptime)
-	assert.Equal(t, expected, result)
+	require.Error(t, err, ErrInsufficientUptime)
+	assert.Equal(t, Uptime{}, result)
 }
 
 func TestParseUptimeLineSuccess(t *testing.T) {
@@ -90,7 +86,7 @@ func TestParseUptimeLineParseMetricsError(t *testing.T) {
 		t.Run(line, func(t *testing.T) {
 			result, err := parseUptimeLine(line)
 
-			require.Error(t, err)
+			require.ErrorIs(t, err, strconv.ErrSyntax)
 			require.Equal(t, Uptime{}, result)
 		})
 	}

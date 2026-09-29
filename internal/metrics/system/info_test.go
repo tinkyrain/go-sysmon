@@ -1,6 +1,7 @@
 package system
 
 import (
+	"io/fs"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -65,7 +66,7 @@ func TestReadInfoReadFileError(t *testing.T) {
 
 	result, err := reader.read()
 
-	require.Error(t, err)
+	require.Error(t, err, fs.ErrNotExist)
 	assert.Equal(t, Info{}, result)
 }
 

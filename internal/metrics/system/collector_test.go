@@ -41,8 +41,7 @@ func TestCollectSuccess(t *testing.T) {
 		},
 	}
 
-	fs := procfs.New(tempDirWithFiles(t, systemFiles(), 0o755, 0o600))
-	collector := New(fs)
+	collector := New(procfs.New(tempDirWithFiles(t, systemFiles(), 0o755, 0o600)))
 
 	result, err := collector.Collect()
 
@@ -56,8 +55,7 @@ func TestCollectError(t *testing.T) {
 			files := systemFiles()
 			delete(files, file)
 
-			fs := procfs.New(tempDirWithFiles(t, files, 0o755, 0o600))
-			collector := New(fs)
+			collector := New(procfs.New(tempDirWithFiles(t, files, 0o755, 0o600)))
 
 			result, err := collector.Collect()
 

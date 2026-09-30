@@ -26,8 +26,8 @@ func TestReadLoadAvgSuccess(t *testing.T) {
 		TotalProcs:   456,
 		LastPID:      12345,
 	}
-	fs := procfs.New(tempDirWithFiles(t, loadavgFiles(), 0o755, 0o600))
-	reader := loadAvgReader{fs: fs}
+
+	reader := loadAvgReader{fs: procfs.New(tempDirWithFiles(t, loadavgFiles(), 0o755, 0o600))}
 
 	result, err := reader.read()
 
@@ -51,9 +51,7 @@ func TestReadLoadAvgBlankFileError(t *testing.T) {
 	files := loadavgFiles()
 	files[loadAvgFile] = ""
 
-	dir := tempDirWithFiles(t, files, 0o755, 0o600)
-	fs := procfs.New(dir)
-	reader := loadAvgReader{fs: fs}
+	reader := loadAvgReader{fs: procfs.New(tempDirWithFiles(t, files, 0o755, 0o600))}
 
 	result, err := reader.read()
 

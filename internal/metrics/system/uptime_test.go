@@ -23,8 +23,7 @@ func TestReadUptimeSuccess(t *testing.T) {
 		Idle:  2025143.51,
 	}
 
-	fs := procfs.New(tempDirWithFiles(t, uptimeFiles(), 0o755, 0o600))
-	reader := uptimeReader{fs: fs}
+	reader := uptimeReader{fs: procfs.New(tempDirWithFiles(t, uptimeFiles(), 0o755, 0o600))}
 
 	result, err := reader.read()
 
@@ -47,9 +46,8 @@ func TestReadUptimeFileError(t *testing.T) {
 func TestReadUptimeBlankFileError(t *testing.T) {
 	files := uptimeFiles()
 	files[uptimeFile] = ""
-	dir := tempDirWithFiles(t, files, 0o600, 0o600)
-	fs := procfs.New(dir)
-	reader := uptimeReader{fs: fs}
+
+	reader := uptimeReader{fs: procfs.New(tempDirWithFiles(t, files, 0o755, 0o600))}
 
 	result, err := reader.read()
 

@@ -10,29 +10,29 @@ import (
 
 const meminfoFile string = "meminfo"
 
-type memoryReader struct {
+type meminfoReader struct {
 	fs procfs.FileScanner
 }
 
-type Memory struct {
+type MemInfo struct {
 	Total         uint64
 	Available     uint64
 	SwapTotal     uint64
 	SwapAvailable uint64
 }
 
-func (r *memoryReader) read() (Memory, error) {
+func (r *meminfoReader) read() (MemInfo, error) {
 	data, err := r.fs.ScanRows(meminfoFile)
 	if err != nil {
-		return Memory{}, err
+		return MemInfo{}, err
 	}
 
-	memory := Memory{}
+	meminfo := MemInfo{}
 	info := map[string]*uint64{
-		"MemTotal":     &memory.Total,
-		"MemAvailable": &memory.Available,
-		"SwapTotal":    &memory.SwapTotal,
-		"SwapFree":     &memory.SwapAvailable,
+		"MemTotal":     &meminfo.Total,
+		"MemAvailable": &meminfo.Available,
+		"SwapTotal":    &meminfo.SwapTotal,
+		"SwapFree":     &meminfo.SwapAvailable,
 	}
 
 	for _, line := range data {
@@ -47,11 +47,11 @@ func (r *memoryReader) read() (Memory, error) {
 			}
 			convetredValue, err := strconv.ParseUint(fields[0], 10, 64)
 			if err != nil {
-				return Memory{}, fmt.Errorf("error parsing metric %q value: %w", name, err)
+				return MemInfo{}, fmt.Errorf("error parsing metric %q value: %w", name, err)
 			}
 			*info[name] = convetredValue * 1024 // Kb in bytes
 		}
 	}
 
-	return memory, nil
+	return meminfo, nil
 }

@@ -24,14 +24,14 @@ Dirty:              1788 kB
 }
 
 func TestReadMemorySuccess(t *testing.T) {
-	expected := Memory{
+	expected := MemInfo{
 		Total:         13315522560,
 		Available:     5244837888,
 		SwapTotal:     4294963200,
 		SwapAvailable: 3464392704,
 	}
 
-	reader := memoryReader{procfs.New(tempDirWithFiles(t, meminfoFiles(), 0o755, 0o600))}
+	reader := meminfoReader{procfs.New(tempDirWithFiles(t, meminfoFiles(), 0o755, 0o600))}
 
 	result, err := reader.read()
 
@@ -43,69 +43,69 @@ func TestReadMemoryBlankFile(t *testing.T) {
 	files := meminfoFiles()
 	files[meminfoFile] = ""
 
-	reader := memoryReader{fs: procfs.New(tempDirWithFiles(t, files, 0o755, 0o600))}
+	reader := meminfoReader{fs: procfs.New(tempDirWithFiles(t, files, 0o755, 0o600))}
 
 	result, err := reader.read()
 
 	require.NoError(t, err)
-	assert.Equal(t, Memory{}, result)
+	assert.Equal(t, MemInfo{}, result)
 }
 
 func TestReadMemoryNeedleMetricsNotFound(t *testing.T) {
 	files := meminfoFiles()
 	files[meminfoFile] = "Buffers: 338020 kB\nCached: 1234 kB"
 
-	reader := memoryReader{fs: procfs.New(tempDirWithFiles(t, files, 0o755, 0o600))}
+	reader := meminfoReader{fs: procfs.New(tempDirWithFiles(t, files, 0o755, 0o600))}
 
 	result, err := reader.read()
 
 	require.NoError(t, err)
-	assert.Equal(t, Memory{}, result)
+	assert.Equal(t, MemInfo{}, result)
 }
 
 func TestReadMemoryFileNotFound(t *testing.T) {
 	files := meminfoFiles()
 	delete(files, meminfoFile)
 
-	reader := memoryReader{fs: procfs.New(tempDirWithFiles(t, files, 0o755, 0o600))}
+	reader := meminfoReader{fs: procfs.New(tempDirWithFiles(t, files, 0o755, 0o600))}
 
 	result, err := reader.read()
 
 	require.Error(t, err)
-	assert.Equal(t, Memory{}, result)
+	assert.Equal(t, MemInfo{}, result)
 }
 
 func TestReadMemoryErrorConvertMetrics(t *testing.T) {
 	files := meminfoFiles()
 	files[meminfoFile] = "Buffers: 338020 kB\nMemAvailable: is_not_converted_string kB"
-	reader := memoryReader{fs: procfs.New(tempDirWithFiles(t, files, 0o755, 0o600))}
+	reader := meminfoReader{fs: procfs.New(tempDirWithFiles(t, files, 0o755, 0o600))}
 
 	result, err := reader.read()
 
 	require.ErrorIs(t, err, strconv.ErrSyntax)
-	assert.Equal(t, Memory{}, result)
+	assert.Equal(t, MemInfo{}, result)
 }
 
 func TestReadMemoryIncorrectMetricLine(t *testing.T) {
 	files := meminfoFiles()
 	files[meminfoFile] = "Buffers 338020 kB\nMemAvailable 1321223 kB"
 
-	reader := memoryReader{fs: procfs.New(tempDirWithFiles(t, files, 0o755, 0o600))}
+	reader := meminfoReader{fs: procfs.New(tempDirWithFiles(t, files, 0o755, 0o600))}
 
 	result, err := reader.read()
 
 	require.NoError(t, err)
-	assert.Equal(t, Memory{}, result)
+	assert.Equal(t, MemInfo{}, result)
 }
 
 func TestReadMemoryBlankMetricRow(t *testing.T) {
 	files := meminfoFiles()
 	files[meminfoFile] = "Buffers: 338020 kB\nMemAvailable:"
 
-	reader := memoryReader{fs: procfs.New(tempDirWithFiles(t, files, 0o755, 0o600))}
+	reader := meminfoReader{fs: procfs.New(tempDirWithFiles(t, files, 0o755, 0o600))}
 
 	result, err := reader.read()
 
 	require.NoError(t, err)
-	assert.Equal(t, Memory{}, result)
+	assert.Equal(t, MemInfo{}, result)
 }

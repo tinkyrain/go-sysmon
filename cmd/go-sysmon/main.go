@@ -12,7 +12,6 @@ import (
 	"github.com/tinkyrain/go-sysmon/internal/app"
 	"github.com/tinkyrain/go-sysmon/internal/config"
 	"github.com/tinkyrain/go-sysmon/internal/metrics"
-	"github.com/tinkyrain/go-sysmon/internal/ui"
 )
 
 var (
@@ -50,12 +49,14 @@ func run(ctx context.Context) error {
 		return err
 	}
 
-	dash := ui.NewDashboard()
-	defer dash.Stop()
-
 	collector := metrics.New(cfg.ProcRoot)
 
-	return app.Run(ctx, cfg, collector.Collect, dash.Render)
+	// TODO: temporary stub until the new ui package is written
+	preview := func(snapshot metrics.Snapshot) {
+		fmt.Printf("%+v\n", snapshot)
+	}
+
+	return app.Run(ctx, cfg, collector.Collect, preview)
 }
 
 func versionString() string {

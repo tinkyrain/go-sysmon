@@ -51,7 +51,7 @@ func TestReadMemoryBlankFile(t *testing.T) {
 	assert.Equal(t, MemInfo{}, result)
 }
 
-func TestReadMemoryNeedleMetricsNotFound(t *testing.T) {
+func TestReadMemoryNecessaryMetricsNotFound(t *testing.T) {
 	files := meminfoFiles()
 	files[meminfoFile] = "Buffers: 338020 kB\nCached: 1234 kB"
 

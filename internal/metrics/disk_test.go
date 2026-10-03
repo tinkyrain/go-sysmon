@@ -63,7 +63,7 @@ func TestReadDiskBlankFile(t *testing.T) {
 	assert.Equal(t, expected, readResult)
 }
 
-func TestReadDiskNeedleMetricsNotFound(t *testing.T) {
+func TestReadDiskNecessaryMetricsNotFound(t *testing.T) {
 	expected := []Disk{}
 	dir := tempDirWithFile(
 		t,

@@ -42,7 +42,7 @@ func TestReadMemoryBlankFile(t *testing.T) {
 	assert.Equal(t, expected, readResult)
 }
 
-func TestReadMemoryNeedleMetricsNotFound(t *testing.T) {
+func TestReadMemoryNecessaryMetricsNotFound(t *testing.T) {
 	expected := Memory{
 		Total:         0,
 		Available:     0,

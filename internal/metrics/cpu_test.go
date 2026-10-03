@@ -102,7 +102,7 @@ func TestReadCPUSuccessWithPrevSample(t *testing.T) {
 	assert.Equal(t, expectedCPUPrevSamples, cpuReader.prevCPUSamples)
 }
 
-func TestReadCPUWithoutNeedleLines(t *testing.T) {
+func TestReadCPUWithoutNecessaryLines(t *testing.T) {
 	expectedCPU := CPU{}
 	tempDir := tempDirWithFile(t, "stat", "", 0o600)
 	fs := procfs.New(tempDir)

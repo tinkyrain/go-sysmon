@@ -112,7 +112,7 @@ func TestUsageReaderSuccessWithPrevSample(t *testing.T) {
 	assert.Equal(t, expectedPrevUsageSamples, reader.prevUsageSamples)
 }
 
-func TestUsageReaderWithoutNeedleLines(t *testing.T) {
+func TestUsageReaderWithoutNecessaryLines(t *testing.T) {
 	files := usageFiles()
 	files[statFile] = ""
 

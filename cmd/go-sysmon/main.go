@@ -31,7 +31,7 @@ func main() {
 
 	// Context with stop notify
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	defer stop() // stop needle for collect context resources
+	defer stop() // stop necessary for collect context resources
 
 	if err := run(ctx); err != nil {
 		fmt.Fprintln(os.Stderr, "go-sysmon error:", err)

@@ -21,14 +21,26 @@ type Mount struct {
 
 const mountFile = "mounts"
 
-var pathPrefix = [3]string{"/dev/sd", "/dev/nvme", "/dev/vd"}
+var fileSystemTypes = map[string]struct{}{
+	"ext4":    {},
+	"xfs":     {},
+	"btrfs":   {},
+	"vfat":    {},
+	"ntfs":    {},
+	"zfs":     {},
+	"fuseblk": {},
+	"ext2":    {},
+	"ext3":    {},
+	"exfat":   {},
+	"f2fs":    {},
+}
 
 var (
-	ErrEmptyMountsFile    = errors.New("empty mounts file")
-	ErrInsufficientMounts = errors.New("insufficient mounts data")
+	ErrEmptyMountsFile = errors.New("empty mounts file")
+	ErrNoMounts        = errors.New("not found mounts")
 )
 
-func (r *mountsReader) read() ([]Mount, error) {
+func (r mountsReader) read() ([]Mount, error) {
 	data, err := r.fs.ScanRows(mountFile)
 	if err != nil {
 		return []Mount{}, err
@@ -43,20 +55,17 @@ func (r *mountsReader) read() ([]Mount, error) {
 	for _, line := range data {
 		fields := strings.Fields(line)
 
-		if len(fields) < 2 {
+		if len(fields) < 3 {
 			continue
 		}
 
-		for _, prefix := range pathPrefix {
-			if strings.HasPrefix(fields[0], prefix) {
-				paths = append(paths, fields[1])
-				break
-			}
+		if _, ok := fileSystemTypes[fields[2]]; ok {
+			paths = append(paths, fields[1])
 		}
 	}
 
 	if len(paths) == 0 {
-		return []Mount{}, ErrInsufficientMounts
+		return []Mount{}, ErrNoMounts
 	}
 
 	mounts := []Mount{}

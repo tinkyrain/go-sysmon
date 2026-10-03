@@ -25,12 +25,12 @@ func TestCollectSuccess(t *testing.T) {
 			{
 				Path:      "/boot/efi",
 				Total:     120,
-				Available: 130,
+				Available: 50,
 			},
 			{
 				Path:      "/",
 				Total:     120,
-				Available: 130,
+				Available: 50,
 			},
 		},
 	}
@@ -41,7 +41,7 @@ func TestCollectSuccess(t *testing.T) {
 			result := syscall.Statfs_t{}
 			result.Bsize = 10
 			result.Blocks = 12
-			result.Bavail = 13
+			result.Bavail = 5
 			return result, nil
 		},
 	)

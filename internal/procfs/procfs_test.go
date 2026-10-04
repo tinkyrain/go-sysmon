@@ -1,22 +1,16 @@
 package procfs_test
 
 import (
+	"bufio"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
-
-	"github.com/tinkyrain/go-sysmon/internal/procfs"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/tinkyrain/go-sysmon/internal/procfs"
 )
-
-func newScanner(t *testing.T, file, filecontent string) procfs.FileScanner {
-	t.Helper()
-	dir := t.TempDir()
-	require.NoError(t, os.WriteFile(filepath.Join(dir, file), []byte(filecontent), 0o600))
-	return procfs.New(dir)
-}
 
 func TestProcfsScanSuccess(t *testing.T) {
 	cases := []struct {
@@ -50,7 +44,10 @@ func TestProcfsScanSuccess(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			scanner := newScanner(t, tc.filename, tc.content)
+			dir := t.TempDir()
+			require.NoError(t, os.WriteFile(filepath.Join(dir, tc.filename), []byte(tc.content), 0o600))
+
+			scanner := procfs.New(dir)
 			rows, err := scanner.ScanRows(tc.filename)
 
 			require.NoError(t, err)
@@ -59,21 +56,42 @@ func TestProcfsScanSuccess(t *testing.T) {
 	}
 }
 
-// func TestProcfsScanError(t *testing.T) {
-// 	filename := "error_scan"
-// 	path := procfsDir(t, filename, "123123")
-// 	scanner := getProcfsScanner(path)
-//
-// 	_, err := scanner.ScanRows(filename)
-//
-// 	assert.Error(t, err)
-// }
-//
-// func TestProcfsScanFileNotFound(t *testing.T) {
-// 	path := procfsDir(t, "file_not_found", "")
-// 	scanner := getProcfsScanner(path)
-//
-// 	_, err := scanner.ScanRows("fff_not_fff")
-//
-// 	assert.Error(t, err)
-// }
+func TestProcfsScanError(t *testing.T) {
+	cases := []struct {
+		name               string
+		targetFilename     string
+		filename           string
+		content            string
+		expectedScanResult []string
+		expectedError      error
+	}{
+		{
+			name:               "Test case: file not found",
+			filename:           "file",
+			targetFilename:     "file_not_found",
+			expectedScanResult: nil,
+			expectedError:      os.ErrNotExist,
+		},
+		{
+			name:               "Test case: file with row more 64 KB",
+			filename:           "file",
+			targetFilename:     "file",
+			content:            strings.Repeat("A", 65*1024),
+			expectedScanResult: nil,
+			expectedError:      bufio.ErrTooLong,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			dir := t.TempDir()
+			require.NoError(t, os.WriteFile(filepath.Join(dir, tc.filename), []byte(tc.content), 0o600))
+
+			scanner := procfs.New(dir)
+			result, err := scanner.ScanRows(tc.targetFilename)
+
+			require.ErrorIs(t, err, tc.expectedError)
+			assert.Equal(t, tc.expectedScanResult, result)
+		})
+	}
+}

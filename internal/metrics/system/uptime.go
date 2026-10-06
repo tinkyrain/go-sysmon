@@ -20,26 +20,28 @@ type Uptime struct {
 	Idle  float64
 }
 
-var ErrInsufficientUptime = errors.New("insufficient uptime data")
+var (
+	ErrIncorrectUptimeData = errors.New("uptime data is incorrect")
+	ErrEmptyUptimeData     = errors.New("uptime data is empty")
+)
 
 func (r uptimeReader) read() (Uptime, error) {
-	data, err := r.fs.ScanRows(uptimeFile)
+	data, err := r.fs.ScanRow(uptimeFile)
 	if err != nil {
-		return Uptime{}, err
+		return Uptime{}, fmt.Errorf("scan %q: %w", uptimeFile, err)
 	}
 
 	if len(data) == 0 {
-		return Uptime{}, ErrInsufficientUptime
+		return Uptime{}, fmt.Errorf("read %q: %w", uptimeFile, ErrEmptyUptimeData)
 	}
 
-	// data[0] - because /proc/uptime has one row
-	return parseUptimeLine(data[0])
+	return parseUptimeLine(data)
 }
 
 func parseUptimeLine(line string) (Uptime, error) {
 	fields := strings.Fields(line)
 	if len(fields) < 2 {
-		return Uptime{}, ErrInsufficientUptime
+		return Uptime{}, fmt.Errorf("parse line: %w", ErrIncorrectUptimeData)
 	}
 
 	var err error

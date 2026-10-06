@@ -81,7 +81,7 @@ func TestParseLoadAvgLineError(t *testing.T) {
 		expectedError error
 	}{
 		{
-			name:          "Insufficient data in the line",
+			name:          "Incorrect data in the line",
 			line:          "0.25 0.30 1/456",
 			expectedError: ErrIncorrectLoadAvgData,
 		},

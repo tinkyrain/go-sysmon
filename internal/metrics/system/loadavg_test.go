@@ -2,7 +2,6 @@ package system
 
 import (
 	"os"
-	"path/filepath"
 	"strconv"
 	"testing"
 
@@ -35,19 +34,19 @@ func TestReadLoadAvgSuccess(t *testing.T) {
 	assert.Equal(t, expected, result)
 }
 
-func TestReadLoadAvgReadFileError(t *testing.T) {
-	dir := tempDirWithFiles(t, map[string]string{}, 0o755, 0o600)
-	require.NoError(t, os.Mkdir(filepath.Join(dir, loadAvgFile), 0o755))
+func TestReadLoadAvgScanError(t *testing.T) {
+	files := loadavgFiles()
+	delete(files, loadAvgFile)
 
-	reader := loadAvgReader{fs: procfs.New(dir)}
+	reader := loadAvgReader{fs: procfs.New(tempDirWithFiles(t, files, 0o755, 0o600))}
 
 	result, err := reader.read()
 
-	require.Error(t, err)
+	require.ErrorIs(t, err, os.ErrNotExist)
 	assert.Equal(t, LoadAvg{}, result)
 }
 
-func TestReadLoadAvgBlankFileError(t *testing.T) {
+func TestReadLoadAvgEmptyDataError(t *testing.T) {
 	files := loadavgFiles()
 	files[loadAvgFile] = ""
 
@@ -55,7 +54,7 @@ func TestReadLoadAvgBlankFileError(t *testing.T) {
 
 	result, err := reader.read()
 
-	require.ErrorIs(t, err, ErrInsufficientLoadAvg)
+	require.ErrorIs(t, err, ErrEmptyLoadAvgData)
 	assert.Equal(t, LoadAvg{}, result)
 }
 
@@ -75,36 +74,60 @@ func TestParseLoadAvgLineSuccess(t *testing.T) {
 	assert.Equal(t, expected, result)
 }
 
-func TestParseLoadAvgLineIncorrectMetricsCountErr(t *testing.T) {
-	result, err := parseLoadAvgLine("123")
-
-	require.ErrorIs(t, err, ErrInsufficientLoadAvg)
-	require.Equal(t, LoadAvg{}, result)
-}
-
-func TestParseLoadAvgLineIncorrectMetricError(t *testing.T) {
-	result, err := parseLoadAvgLine("0.15 0.25 0.30 test 12345")
-
-	require.ErrorIs(t, err, ErrIncorrectLoadAvgMetric)
-	require.Equal(t, LoadAvg{}, result)
-}
-
-func TestParseLoadAvgLineParseMetricsError(t *testing.T) {
-	data := map[string]string{
-		"test_1": "test 0.25 0.30 1/456 12345",
-		"test_2": "0.15 test 0.30 1/456 12345",
-		"test_3": "0.15 0.25 test 1/456 12345",
-		"test_4": "0.15 0.25 0.30 1/456 test",
-		"test_5": "0.15 0.25 0.30 test/456 12345",
-		"test_6": "0.15 0.25 0.30 1/test 12345",
+func TestParseLoadAvgLineError(t *testing.T) {
+	cases := []struct {
+		name          string
+		line          string
+		expectedError error
+	}{
+		{
+			name:          "Insufficient data in the line",
+			line:          "0.25 0.30 1/456",
+			expectedError: ErrIncorrectLoadAvgData,
+		},
+		{
+			name:          "One min metric is incorrect",
+			line:          "test 0.25 0.30 1/456 12345",
+			expectedError: strconv.ErrSyntax,
+		},
+		{
+			name:          "Five min metric is incorrect",
+			line:          "0.15 test 0.30 1/456 12345",
+			expectedError: strconv.ErrSyntax,
+		},
+		{
+			name:          "Fifteen min metric is incorrect",
+			line:          "0.15 0.25 test 1/456 12345",
+			expectedError: strconv.ErrSyntax,
+		},
+		{
+			name:          "Lastpid metric is incorrect",
+			line:          "0.15 0.25 0.30 1/456 test",
+			expectedError: strconv.ErrSyntax,
+		},
+		{
+			name:          "Running procs metric is incorrect",
+			line:          "0.15 0.25 0.30 test/456 12345",
+			expectedError: strconv.ErrSyntax,
+		},
+		{
+			name:          "Total procs metric is incorrect",
+			line:          "0.15 0.25 0.30 1/test 12345",
+			expectedError: strconv.ErrSyntax,
+		},
+		{
+			name:          "Procs metric string is incorrect",
+			line:          "0.15 0.25 0.30 test 12345",
+			expectedError: ErrIncorrectLoadAvgData,
+		},
 	}
 
-	for key, line := range data {
-		t.Run(key, func(t *testing.T) {
-			result, err := parseLoadAvgLine(line)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := parseLoadAvgLine(tc.line)
 
-			require.ErrorIs(t, err, strconv.ErrSyntax)
-			require.Equal(t, LoadAvg{}, result)
+			require.ErrorIs(t, err, tc.expectedError)
+			assert.Equal(t, LoadAvg{}, result)
 		})
 	}
 }

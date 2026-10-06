@@ -95,7 +95,7 @@ func TestReadInfoFileIsEmptyError(t *testing.T) {
 			reader := infoReader{fs: procfs.New(tempDirWithFiles(t, files, 0o755, 0o600))}
 			result, err := reader.read()
 
-			require.ErrorIs(t, err, ErrEmptyFile)
+			require.ErrorIs(t, err, ErrEmptyInfoData)
 			assert.Equal(t, Info{}, result)
 		})
 	}

@@ -25,7 +25,7 @@ type Info struct {
 	Arch     string
 }
 
-var ErrEmptyFile = errors.New("file is empty")
+var ErrEmptyInfoData = errors.New("info data is empty")
 
 func (r infoReader) read() (Info, error) {
 	info := Info{}
@@ -45,7 +45,7 @@ func (r infoReader) read() (Info, error) {
 		}
 
 		if len(row) == 0 {
-			return Info{}, fmt.Errorf("read %q: %w", file, ErrEmptyFile)
+			return Info{}, fmt.Errorf("read %q: %w", file, ErrEmptyInfoData)
 		}
 
 		*value = row

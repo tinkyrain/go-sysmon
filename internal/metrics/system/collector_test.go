@@ -1,6 +1,7 @@
 package system
 
 import (
+	"os"
 	"runtime"
 	"testing"
 
@@ -41,7 +42,7 @@ func TestCollectSuccess(t *testing.T) {
 		},
 	}
 
-	collector := New(procfs.New(tempDirWithFiles(t, systemFiles(), 0o755, 0o600)))
+	collector := New(procfs.New(tempDirWithFiles(t, systemFiles())))
 
 	result, err := collector.Collect()
 
@@ -50,16 +51,48 @@ func TestCollectSuccess(t *testing.T) {
 }
 
 func TestCollectError(t *testing.T) {
-	for file := range systemFiles() {
-		t.Run(file, func(t *testing.T) {
-			files := systemFiles()
-			delete(files, file)
+	cases := []struct {
+		name          string
+		targetFile    string
+		expectedError error
+	}{
+		{
+			name:          "Hostname file not found",
+			targetFile:    hostnameFile,
+			expectedError: os.ErrNotExist,
+		},
+		{
+			name:          "Osrelease file not found",
+			targetFile:    osreleaseFile,
+			expectedError: os.ErrNotExist,
+		},
+		{
+			name:          "Ostype file not found",
+			targetFile:    ostypeFile,
+			expectedError: os.ErrNotExist,
+		},
+		{
+			name:          "Loadavg file not found",
+			targetFile:    loadAvgFile,
+			expectedError: os.ErrNotExist,
+		},
+		{
+			name:          "Uptime file not found",
+			targetFile:    uptimeFile,
+			expectedError: os.ErrNotExist,
+		},
+	}
 
-			collector := New(procfs.New(tempDirWithFiles(t, files, 0o755, 0o600)))
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			files := systemFiles()
+			delete(files, tc.targetFile)
+
+			collector := New(procfs.New(tempDirWithFiles(t, files)))
 
 			result, err := collector.Collect()
 
-			require.Error(t, err)
+			require.ErrorIs(t, err, tc.expectedError)
 			assert.Equal(t, Stats{}, result)
 		})
 	}

@@ -27,7 +27,7 @@ func TestReadInfoSuccess(t *testing.T) {
 		Arch:     runtime.GOARCH,
 	}
 
-	reader := infoReader{fs: procfs.New(tempDirWithFiles(t, files, 0o755, 0o600))}
+	reader := infoReader{fs: procfs.New(tempDirWithFiles(t, files))}
 
 	result, err := reader.read()
 
@@ -59,7 +59,7 @@ func TestReadInfoFileNotExistError(t *testing.T) {
 			files := infoFiles()
 			delete(files, tc.targetFile)
 
-			reader := infoReader{fs: procfs.New(tempDirWithFiles(t, files, 0o755, 0o600))}
+			reader := infoReader{fs: procfs.New(tempDirWithFiles(t, files))}
 			result, err := reader.read()
 
 			require.ErrorIs(t, err, os.ErrNotExist)
@@ -92,7 +92,7 @@ func TestReadInfoFileIsEmptyError(t *testing.T) {
 			files := infoFiles()
 			files[tc.targetFile] = ""
 
-			reader := infoReader{fs: procfs.New(tempDirWithFiles(t, files, 0o755, 0o600))}
+			reader := infoReader{fs: procfs.New(tempDirWithFiles(t, files))}
 			result, err := reader.read()
 
 			require.ErrorIs(t, err, ErrEmptyInfoData)

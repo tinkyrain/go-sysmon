@@ -26,7 +26,7 @@ func TestReadLoadAvgSuccess(t *testing.T) {
 		LastPID:      12345,
 	}
 
-	reader := loadAvgReader{fs: procfs.New(tempDirWithFiles(t, loadavgFiles(), 0o755, 0o600))}
+	reader := loadAvgReader{fs: procfs.New(tempDirWithFiles(t, loadavgFiles()))}
 
 	result, err := reader.read()
 
@@ -38,7 +38,7 @@ func TestReadLoadAvgScanError(t *testing.T) {
 	files := loadavgFiles()
 	delete(files, loadAvgFile)
 
-	reader := loadAvgReader{fs: procfs.New(tempDirWithFiles(t, files, 0o755, 0o600))}
+	reader := loadAvgReader{fs: procfs.New(tempDirWithFiles(t, files))}
 
 	result, err := reader.read()
 
@@ -50,7 +50,7 @@ func TestReadLoadAvgEmptyDataError(t *testing.T) {
 	files := loadavgFiles()
 	files[loadAvgFile] = ""
 
-	reader := loadAvgReader{fs: procfs.New(tempDirWithFiles(t, files, 0o755, 0o600))}
+	reader := loadAvgReader{fs: procfs.New(tempDirWithFiles(t, files))}
 
 	result, err := reader.read()
 

@@ -29,37 +29,27 @@ var ErrEmptyFile = errors.New("file is empty")
 
 func (r infoReader) read() (Info, error) {
 	info := Info{}
-	var err error
-
 	info.Arch = runtime.GOARCH
 
-	info.OS, err = r.readRow(ostypeFile)
-	if err != nil {
-		return Info{}, err
+	fileToValue := map[string]*string{
+		hostnameFile:  &info.Hostname,
+		ostypeFile:    &info.OS,
+		osreleaseFile: &info.Kernel,
 	}
 
-	info.Kernel, err = r.readRow(osreleaseFile)
-	if err != nil {
-		return Info{}, err
-	}
+	for file, value := range fileToValue {
+		row, err := r.fs.ScanRow(file)
 
-	info.Hostname, err = r.readRow(hostnameFile)
-	if err != nil {
-		return Info{}, err
+		if err != nil {
+			return Info{}, fmt.Errorf("scan %q: %w", file, err)
+		}
+
+		if len(row) == 0 {
+			return Info{}, fmt.Errorf("read %q: %w", file, ErrEmptyFile)
+		}
+
+		*value = row
 	}
 
 	return info, nil
-}
-
-func (r infoReader) readRow(file string) (string, error) {
-	row, err := r.fs.ScanRow(file)
-	if err != nil {
-		return "", fmt.Errorf("scan %q: %w", file, err)
-	}
-
-	if len(row) == 0 {
-		return "", fmt.Errorf("read %q: %w", file, ErrEmptyFile)
-	}
-
-	return row, nil
 }

@@ -48,14 +48,14 @@ type Usage struct {
 }
 
 var (
-	ErrFewMetricsCountForParsing = errors.New("parsing CPU ticks need 10 metrics")
-	ErrNoTickLines               = errors.New("no cpu lines in file")
+	ErrIncorrectStatData = errors.New("parsing CPU ticks need 10 metrics")
+	ErrEmptyStatData     = errors.New("no cpu lines in file")
 )
 
 func (r *usageReader) read() (Usage, error) {
 	data, err := r.fs.ScanRows(statFile)
 	if err != nil {
-		return Usage{}, err
+		return Usage{}, fmt.Errorf("scan %q: %w", statFile, err)
 	}
 
 	var lines [][]string
@@ -73,7 +73,7 @@ func (r *usageReader) read() (Usage, error) {
 	}
 
 	if len(lines) == 0 {
-		return Usage{}, ErrNoTickLines
+		return Usage{}, fmt.Errorf("read %q: %w", statFile, ErrEmptyStatData)
 	}
 
 	usage := Usage{}
@@ -140,7 +140,7 @@ func calculateUsage(prev, cur usageSample) float64 {
 
 func parseTicksLine(line []string) (ticks, error) {
 	if len(line) < 11 {
-		return ticks{}, ErrFewMetricsCountForParsing
+		return ticks{}, fmt.Errorf("parse line %q: %w", strings.Join(line, " "), ErrIncorrectStatData)
 	}
 	id := line[0]
 	line = line[1:]
@@ -148,7 +148,7 @@ func parseTicksLine(line []string) (ticks, error) {
 	for _, value := range line {
 		convertedValue, err := strconv.ParseUint(value, 10, 64)
 		if err != nil {
-			return ticks{}, fmt.Errorf("parsing cpu line %q: %w", value, err)
+			return ticks{}, fmt.Errorf("parse value in line %q: %w", value, err)
 		}
 		converted = append(converted, convertedValue)
 	}

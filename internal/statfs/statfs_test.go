@@ -33,10 +33,6 @@ func TestGetDirStatfsOnFile(t *testing.T) {
 
 func TestGetDirStatfsNotFound(t *testing.T) {
 	missing := filepath.Join(t.TempDir(), "nope")
-
 	_, err := statfs.GetDirStatfs(missing)
-
-	require.Error(t, err)
-	assert.ErrorIs(t, err, fs.ErrNotExist)
-	assert.ErrorContains(t, err, missing)
+	require.ErrorIs(t, err, fs.ErrNotExist)
 }

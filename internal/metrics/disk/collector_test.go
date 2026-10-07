@@ -36,7 +36,7 @@ func TestCollectSuccess(t *testing.T) {
 	}
 
 	collector := New(
-		procfs.New(tempDirWithFiles(t, diskFiles(), 0o755, 0o600)),
+		procfs.New(tempDirWithFiles(t, diskFiles())),
 		func(path string) (syscall.Statfs_t, error) {
 			result := syscall.Statfs_t{}
 			result.Bsize = 10
@@ -59,7 +59,7 @@ func TestCollectError(t *testing.T) {
 			delete(files, file)
 
 			collector := New(
-				procfs.New(tempDirWithFiles(t, files, 0o755, 0o600)),
+				procfs.New(tempDirWithFiles(t, files)),
 				func(path string) (syscall.Statfs_t, error) {
 					result := syscall.Statfs_t{}
 					result.Bsize = 10

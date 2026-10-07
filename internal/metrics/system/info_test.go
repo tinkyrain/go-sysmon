@@ -35,7 +35,7 @@ func TestReadInfoSuccess(t *testing.T) {
 	assert.Equal(t, expected, result)
 }
 
-func TestReadInfoFileNotExistError(t *testing.T) {
+func TestReadInfoScanError(t *testing.T) {
 	cases := []struct {
 		name       string
 		targetFile string

@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -30,7 +31,7 @@ func TestCollectSuccess(t *testing.T) {
 			SwapAvailable: 3464392704,
 		},
 	}
-	collector := New(procfs.New(tempDirWithFiles(t, meminfoFiles(), 0o755, 0o600)))
+	collector := New(procfs.New(tempDirWithFiles(t, meminfoFiles())))
 
 	result, err := collector.Collect()
 
@@ -39,17 +40,13 @@ func TestCollectSuccess(t *testing.T) {
 }
 
 func TestCollectError(t *testing.T) {
-	for file := range memoryFiles() {
-		t.Run(file, func(t *testing.T) {
-			files := memoryFiles()
-			delete(files, file)
+	files := memoryFiles()
+	delete(files, meminfoFile)
 
-			collector := New(procfs.New(tempDirWithFiles(t, files, 0o755, 0o600)))
+	collector := New(procfs.New(tempDirWithFiles(t, files)))
 
-			result, err := collector.Collect()
+	result, err := collector.Collect()
 
-			require.Error(t, err)
-			assert.Equal(t, Stats{}, result)
-		})
-	}
+	require.ErrorIs(t, err, os.ErrNotExist)
+	assert.Equal(t, Stats{}, result)
 }

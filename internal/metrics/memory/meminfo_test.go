@@ -32,7 +32,7 @@ func TestReadMemInfoSuccess(t *testing.T) {
 		SwapAvailable: 3464392704,
 	}
 
-	reader := meminfoReader{procfs.New(tempDirWithFiles(t, meminfoFiles(), 0o755, 0o600))}
+	reader := meminfoReader{procfs.New(tempDirWithFiles(t, meminfoFiles()))}
 
 	result, err := reader.read()
 
@@ -44,7 +44,7 @@ func TestReadMemInfoScanError(t *testing.T) {
 	files := meminfoFiles()
 	delete(files, meminfoFile)
 
-	reader := meminfoReader{fs: procfs.New(tempDirWithFiles(t, files, 0o755, 0o600))}
+	reader := meminfoReader{fs: procfs.New(tempDirWithFiles(t, files))}
 
 	result, err := reader.read()
 
@@ -100,7 +100,7 @@ func TestReadMemInfoError(t *testing.T) {
 			files := meminfoFiles()
 			files[meminfoFile] = tc.fileContent
 
-			reader := meminfoReader{fs: procfs.New(tempDirWithFiles(t, files, 0o755, 0o600))}
+			reader := meminfoReader{fs: procfs.New(tempDirWithFiles(t, files))}
 
 			result, err := reader.read()
 

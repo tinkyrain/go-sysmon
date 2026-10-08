@@ -2,15 +2,16 @@ package disk
 
 import (
 	"errors"
+	"fmt"
 	"strings"
-	"syscall"
 
 	"github.com/tinkyrain/go-sysmon/internal/procfs"
+	"github.com/tinkyrain/go-sysmon/internal/statfs"
 )
 
 type mountsReader struct {
-	fs         procfs.FileScanner
-	statfsFunc func(string) (syscall.Statfs_t, error)
+	fs     procfs.FileScanner
+	statfs statfs.Func
 }
 
 type Mount struct {
@@ -26,7 +27,7 @@ var fileSystemTypes = map[string]struct{}{
 	"xfs":     {},
 	"btrfs":   {},
 	"vfat":    {},
-	"ntfs":    {},
+	"ntfs3":   {},
 	"zfs":     {},
 	"fuseblk": {},
 	"ext2":    {},
@@ -36,18 +37,18 @@ var fileSystemTypes = map[string]struct{}{
 }
 
 var (
-	ErrEmptyMountsFile = errors.New("empty mounts file")
-	ErrNoMounts        = errors.New("not found mounts")
+	ErrEmptyMountsData      = errors.New("mounts data is empty")
+	ErrNoSuitableMountsData = errors.New("suitable mounts not found")
 )
 
 func (r mountsReader) read() ([]Mount, error) {
 	data, err := r.fs.ScanRows(mountFile)
 	if err != nil {
-		return []Mount{}, err
+		return nil, fmt.Errorf("scan %q: %w", mountFile, err)
 	}
 
 	if len(data) == 0 {
-		return []Mount{}, ErrEmptyMountsFile
+		return nil, fmt.Errorf("read %q: %w", mountFile, ErrEmptyMountsData)
 	}
 
 	var paths []string
@@ -65,21 +66,20 @@ func (r mountsReader) read() ([]Mount, error) {
 	}
 
 	if len(paths) == 0 {
-		return []Mount{}, ErrNoMounts
+		return nil, fmt.Errorf("read %q: %w", mountFile, ErrNoSuitableMountsData)
 	}
 
 	mounts := []Mount{}
 
 	for _, path := range paths {
-		stat, err := r.statfsFunc(path)
+		stat, err := r.statfs(path)
 		if err != nil {
-			return []Mount{}, err
+			return nil, fmt.Errorf("read %q: %w", path, err)
 		}
-		blockSize := uint64(stat.Bsize)
 		mounts = append(mounts, Mount{
 			Path:      path,
-			Total:     stat.Blocks * blockSize,
-			Available: stat.Bavail * blockSize,
+			Total:     stat.Blocks * stat.BlockSize,
+			Available: stat.Available * stat.BlockSize,
 		})
 	}
 

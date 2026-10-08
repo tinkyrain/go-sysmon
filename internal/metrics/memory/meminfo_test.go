@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"os"
 	"strconv"
 	"testing"
 
@@ -23,7 +24,7 @@ Dirty:              1788 kB
 	}
 }
 
-func TestReadMemorySuccess(t *testing.T) {
+func TestReadMemInfoSuccess(t *testing.T) {
 	expected := MemInfo{
 		Total:         13315522560,
 		Available:     5244837888,
@@ -31,7 +32,7 @@ func TestReadMemorySuccess(t *testing.T) {
 		SwapAvailable: 3464392704,
 	}
 
-	reader := meminfoReader{procfs.New(tempDirWithFiles(t, meminfoFiles(), 0o755, 0o600))}
+	reader := meminfoReader{procfs.New(tempDirWithFiles(t, meminfoFiles()))}
 
 	result, err := reader.read()
 
@@ -39,73 +40,72 @@ func TestReadMemorySuccess(t *testing.T) {
 	assert.Equal(t, expected, result)
 }
 
-func TestReadMemoryBlankFile(t *testing.T) {
-	files := meminfoFiles()
-	files[meminfoFile] = ""
-
-	reader := meminfoReader{fs: procfs.New(tempDirWithFiles(t, files, 0o755, 0o600))}
-
-	result, err := reader.read()
-
-	require.NoError(t, err)
-	assert.Equal(t, MemInfo{}, result)
-}
-
-func TestReadMemoryNecessaryMetricsNotFound(t *testing.T) {
-	files := meminfoFiles()
-	files[meminfoFile] = "Buffers: 338020 kB\nCached: 1234 kB"
-
-	reader := meminfoReader{fs: procfs.New(tempDirWithFiles(t, files, 0o755, 0o600))}
-
-	result, err := reader.read()
-
-	require.NoError(t, err)
-	assert.Equal(t, MemInfo{}, result)
-}
-
-func TestReadMemoryFileNotFound(t *testing.T) {
+func TestReadMemInfoScanError(t *testing.T) {
 	files := meminfoFiles()
 	delete(files, meminfoFile)
 
-	reader := meminfoReader{fs: procfs.New(tempDirWithFiles(t, files, 0o755, 0o600))}
+	reader := meminfoReader{fs: procfs.New(tempDirWithFiles(t, files))}
 
 	result, err := reader.read()
 
-	require.Error(t, err)
+	require.ErrorIs(t, err, os.ErrNotExist)
 	assert.Equal(t, MemInfo{}, result)
 }
 
-func TestReadMemoryErrorConvertMetrics(t *testing.T) {
-	files := meminfoFiles()
-	files[meminfoFile] = "Buffers: 338020 kB\nMemAvailable: is_not_converted_string kB"
-	reader := meminfoReader{fs: procfs.New(tempDirWithFiles(t, files, 0o755, 0o600))}
+func TestReadMemInfoError(t *testing.T) {
+	cases := []struct {
+		name          string
+		fileContent   string
+		expectedError error
+	}{
+		{
+			name:          "Empty file",
+			fileContent:   "",
+			expectedError: ErrEmptyMemInfoData,
+		},
+		{
+			name:          "Convert value to uint error",
+			fileContent:   "MemTotal:	testme",
+			expectedError: strconv.ErrSyntax,
+		},
+		{
+			name:          "MemTotal metric missing",
+			fileContent:   "MemAvailable: 200 kB\nSwapTotal: 10 kB\nSwapFree: 3 kB",
+			expectedError: ErrIncorrectMemInfoData,
+		},
+		{
+			name:          "MemAvailable metric missing",
+			fileContent:   "MemTotal: 210 kB\nSwapTotal: 10 kB\nSwapFree: 3 kB",
+			expectedError: ErrIncorrectMemInfoData,
+		},
+		{
+			name:          "SwapTotal metric missing",
+			fileContent:   "MemTotal: 210 kB\nMemAvailable: 200 kB\nSwapFree: 3 kB",
+			expectedError: ErrIncorrectMemInfoData,
+		},
+		{
+			name:          "SwapFree metric missing",
+			fileContent:   "MemTotal: 210 kB\nMemAvailable: 200 kB\nSwapTotal: 10 kB",
+			expectedError: ErrIncorrectMemInfoData,
+		},
+		{
+			name:          "All metrics is incorrect",
+			fileContent:   "MemTotal:\nMemAvailable:\nSwapTotal:\nSwapFree:",
+			expectedError: ErrIncorrectMemInfoData,
+		},
+	}
 
-	result, err := reader.read()
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			files := meminfoFiles()
+			files[meminfoFile] = tc.fileContent
 
-	require.ErrorIs(t, err, strconv.ErrSyntax)
-	assert.Equal(t, MemInfo{}, result)
-}
+			reader := meminfoReader{fs: procfs.New(tempDirWithFiles(t, files))}
 
-func TestReadMemoryIncorrectMetricLine(t *testing.T) {
-	files := meminfoFiles()
-	files[meminfoFile] = "Buffers 338020 kB\nMemAvailable 1321223 kB"
+			result, err := reader.read()
 
-	reader := meminfoReader{fs: procfs.New(tempDirWithFiles(t, files, 0o755, 0o600))}
-
-	result, err := reader.read()
-
-	require.NoError(t, err)
-	assert.Equal(t, MemInfo{}, result)
-}
-
-func TestReadMemoryBlankMetricRow(t *testing.T) {
-	files := meminfoFiles()
-	files[meminfoFile] = "Buffers: 338020 kB\nMemAvailable:"
-
-	reader := meminfoReader{fs: procfs.New(tempDirWithFiles(t, files, 0o755, 0o600))}
-
-	result, err := reader.read()
-
-	require.NoError(t, err)
-	assert.Equal(t, MemInfo{}, result)
+			require.ErrorIs(t, err, tc.expectedError)
+			assert.Equal(t, MemInfo{}, result)
+		})
+	}
 }

@@ -25,28 +25,27 @@ type LoadAvg struct {
 }
 
 var (
-	ErrInsufficientLoadAvg    = errors.New("insufficient loadavg data")
-	ErrIncorrectLoadAvgMetric = errors.New("incorrect loadavg data")
+	ErrIncorrectLoadAvgData = errors.New("loadavg data is incorrect")
+	ErrEmptyLoadAvgData     = errors.New("loadavg data is empty")
 )
 
 func (r loadAvgReader) read() (LoadAvg, error) {
-	data, err := r.fs.ScanRows(loadAvgFile)
+	data, err := r.fs.ScanRow(loadAvgFile)
 	if err != nil {
-		return LoadAvg{}, err
+		return LoadAvg{}, fmt.Errorf("scan %q: %w", loadAvgFile, err)
 	}
 
 	if len(data) == 0 {
-		return LoadAvg{}, ErrInsufficientLoadAvg
+		return LoadAvg{}, fmt.Errorf("read %q: %w", loadAvgFile, ErrEmptyLoadAvgData)
 	}
 
-	// data[0] - because /proc/loadavg has one row
-	return parseLoadAvgLine(data[0])
+	return parseLoadAvgLine(data)
 }
 
 func parseLoadAvgLine(line string) (LoadAvg, error) {
 	fields := strings.Fields(line)
 	if len(fields) < 5 {
-		return LoadAvg{}, ErrInsufficientLoadAvg
+		return LoadAvg{}, fmt.Errorf("parse line %q: %w", line, ErrIncorrectLoadAvgData)
 	}
 
 	var err error
@@ -67,7 +66,7 @@ func parseLoadAvgLine(line string) (LoadAvg, error) {
 
 	running, total, ok := strings.Cut(fields[3], "/")
 	if !ok {
-		return LoadAvg{}, fmt.Errorf("parsing loadavg value %q: %w", fields[3], ErrIncorrectLoadAvgMetric)
+		return LoadAvg{}, fmt.Errorf("parsing loadavg value %q: %w", fields[3], ErrIncorrectLoadAvgData)
 	}
 
 	if loadAvg.RunningProcs, err = strconv.ParseUint(running, 10, 64); err != nil {

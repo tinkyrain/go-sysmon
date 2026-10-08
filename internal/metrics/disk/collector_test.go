@@ -1,12 +1,12 @@
 package disk
 
 import (
-	"syscall"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tinkyrain/go-sysmon/internal/procfs"
+	"github.com/tinkyrain/go-sysmon/internal/statfs"
 )
 
 func diskFiles() map[string]string {
@@ -36,12 +36,12 @@ func TestCollectSuccess(t *testing.T) {
 	}
 
 	collector := New(
-		procfs.New(tempDirWithFiles(t, diskFiles(), 0o755, 0o600)),
-		func(path string) (syscall.Statfs_t, error) {
-			result := syscall.Statfs_t{}
-			result.Bsize = 10
+		procfs.New(tempDirWithFiles(t, diskFiles())),
+		func(string) (statfs.Stats, error) {
+			result := statfs.Stats{}
+			result.BlockSize = 10
 			result.Blocks = 12
-			result.Bavail = 5
+			result.Available = 5
 			return result, nil
 		},
 	)
@@ -53,26 +53,22 @@ func TestCollectSuccess(t *testing.T) {
 }
 
 func TestCollectError(t *testing.T) {
-	for file := range diskFiles() {
-		t.Run(file, func(t *testing.T) {
-			files := diskFiles()
-			delete(files, file)
+	files := diskFiles()
+	delete(files, mountFile)
 
-			collector := New(
-				procfs.New(tempDirWithFiles(t, files, 0o755, 0o600)),
-				func(path string) (syscall.Statfs_t, error) {
-					result := syscall.Statfs_t{}
-					result.Bsize = 10
-					result.Blocks = 12
-					result.Bavail = 13
-					return result, nil
-				},
-			)
+	collector := New(
+		procfs.New(tempDirWithFiles(t, files)),
+		func(string) (statfs.Stats, error) {
+			result := statfs.Stats{}
+			result.BlockSize = 10
+			result.Blocks = 12
+			result.Available = 13
+			return result, nil
+		},
+	)
 
-			result, err := collector.Collect()
+	result, err := collector.Collect()
 
-			require.Error(t, err)
-			assert.Equal(t, Stats{}, result)
-		})
-	}
+	require.Error(t, err)
+	assert.Equal(t, Stats{}, result)
 }

@@ -25,40 +25,31 @@ type Info struct {
 	Arch     string
 }
 
-var ErrEmptyFile = errors.New("file is empty")
+var ErrEmptyInfoData = errors.New("info data is empty")
 
 func (r infoReader) read() (Info, error) {
-	ostype, err := r.fs.ScanRows(ostypeFile)
-	if err != nil {
-		return Info{}, err
+	info := Info{}
+	info.Arch = runtime.GOARCH
+
+	fileToValue := map[string]*string{
+		hostnameFile:  &info.Hostname,
+		ostypeFile:    &info.OS,
+		osreleaseFile: &info.Kernel,
 	}
 
-	osrelease, err := r.fs.ScanRows(osreleaseFile)
-	if err != nil {
-		return Info{}, err
+	for file, value := range fileToValue {
+		row, err := r.fs.ScanRow(file)
+
+		if err != nil {
+			return Info{}, fmt.Errorf("scan %q: %w", file, err)
+		}
+
+		if len(row) == 0 {
+			return Info{}, fmt.Errorf("read %q: %w", file, ErrEmptyInfoData)
+		}
+
+		*value = row
 	}
 
-	hostname, err := r.fs.ScanRows(hostnameFile)
-	if err != nil {
-		return Info{}, err
-	}
-
-	if len(hostname) == 0 {
-		return Info{}, fmt.Errorf("parsing file %q error: %w", hostnameFile, ErrEmptyFile)
-	}
-
-	if len(ostype) == 0 {
-		return Info{}, fmt.Errorf("parsing file %q error: %w", ostypeFile, ErrEmptyFile)
-	}
-
-	if len(osrelease) == 0 {
-		return Info{}, fmt.Errorf("parsing file %q error: %w", osreleaseFile, ErrEmptyFile)
-	}
-
-	return Info{
-		Arch:     runtime.GOARCH,
-		Hostname: hostname[0],
-		OS:       ostype[0],
-		Kernel:   osrelease[0],
-	}, nil
+	return info, nil
 }

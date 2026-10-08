@@ -1,9 +1,7 @@
 package system
 
 import (
-	"io/fs"
 	"os"
-	"path/filepath"
 	"runtime"
 	"testing"
 
@@ -29,8 +27,7 @@ func TestReadInfoSuccess(t *testing.T) {
 		Arch:     runtime.GOARCH,
 	}
 
-	fs := procfs.New(tempDirWithFiles(t, files, 0o755, 0o600))
-	reader := infoReader{fs: fs}
+	reader := infoReader{fs: procfs.New(tempDirWithFiles(t, files))}
 
 	result, err := reader.read()
 
@@ -38,46 +35,67 @@ func TestReadInfoSuccess(t *testing.T) {
 	assert.Equal(t, expected, result)
 }
 
-func TestReadInfoFileNotFound(t *testing.T) {
-	for _, missing := range []string{ostypeFile, osreleaseFile, hostnameFile} {
-		t.Run(missing, func(t *testing.T) {
+func TestReadInfoScanError(t *testing.T) {
+	cases := []struct {
+		name       string
+		targetFile string
+	}{
+		{
+			name:       "File hostname not found",
+			targetFile: hostnameFile,
+		},
+		{
+			name:       "File osrelease not found",
+			targetFile: osreleaseFile,
+		},
+		{
+			name:       "File ostype not found",
+			targetFile: ostypeFile,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
 			files := infoFiles()
-			delete(files, missing)
+			delete(files, tc.targetFile)
 
-			fs := procfs.New(tempDirWithFiles(t, files, 0o755, 0o600))
-			reader := infoReader{fs: fs}
-
+			reader := infoReader{fs: procfs.New(tempDirWithFiles(t, files))}
 			result, err := reader.read()
 
-			require.Error(t, err)
+			require.ErrorIs(t, err, os.ErrNotExist)
 			assert.Equal(t, Info{}, result)
 		})
 	}
 }
 
-func TestReadInfoReadFileError(t *testing.T) {
-	files := infoFiles()
-	delete(files, hostnameFile)
-	dir := tempDirWithFiles(t, files, 0o755, 0o600)
+func TestReadInfoFileIsEmptyError(t *testing.T) {
+	cases := []struct {
+		name       string
+		targetFile string
+	}{
+		{
+			name:       "File hostname is empty",
+			targetFile: hostnameFile,
+		},
+		{
+			name:       "File osrelease is empty",
+			targetFile: osreleaseFile,
+		},
+		{
+			name:       "File ostype is empty",
+			targetFile: ostypeFile,
+		},
+	}
 
-	require.NoError(t, os.Mkdir(filepath.Join(dir, hostnameFile), 0o755))
-
-	reader := infoReader{fs: procfs.New(dir)}
-
-	result, err := reader.read()
-
-	require.Error(t, err, fs.ErrNotExist)
-	assert.Equal(t, Info{}, result)
-}
-
-func TestReadInfoBlankFile(t *testing.T) {
-	for file := range infoFiles() {
-		t.Run(file, func(t *testing.T) {
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
 			files := infoFiles()
-			files[file] = ""
-			reader := infoReader{fs: procfs.New(tempDirWithFiles(t, files, 0o755, 0o600))}
+			files[tc.targetFile] = ""
+
+			reader := infoReader{fs: procfs.New(tempDirWithFiles(t, files))}
 			result, err := reader.read()
-			require.ErrorIs(t, err, ErrEmptyFile)
+
+			require.ErrorIs(t, err, ErrEmptyInfoData)
 			assert.Equal(t, Info{}, result)
 		})
 	}

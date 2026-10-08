@@ -2,7 +2,6 @@ package system
 
 import (
 	"os"
-	"path/filepath"
 	"strconv"
 	"testing"
 
@@ -23,7 +22,7 @@ func TestReadUptimeSuccess(t *testing.T) {
 		Idle:  2025143.51,
 	}
 
-	reader := uptimeReader{fs: procfs.New(tempDirWithFiles(t, uptimeFiles(), 0o755, 0o600))}
+	reader := uptimeReader{fs: procfs.New(tempDirWithFiles(t, uptimeFiles()))}
 
 	result, err := reader.read()
 
@@ -31,27 +30,27 @@ func TestReadUptimeSuccess(t *testing.T) {
 	assert.Equal(t, expected, result)
 }
 
-func TestReadUptimeFileError(t *testing.T) {
-	dir := tempDirWithFiles(t, map[string]string{}, 0o755, 0o600)
-	require.NoError(t, os.Mkdir(filepath.Join(dir, uptimeFile), 0o755))
+func TestReadUptimeScanError(t *testing.T) {
+	files := uptimeFiles()
+	delete(files, uptimeFile)
 
-	reader := uptimeReader{fs: procfs.New(dir)}
+	reader := uptimeReader{fs: procfs.New(tempDirWithFiles(t, files))}
 
 	result, err := reader.read()
 
-	require.Error(t, err)
+	require.ErrorIs(t, err, os.ErrNotExist)
 	assert.Equal(t, Uptime{}, result)
 }
 
-func TestReadUptimeBlankFileError(t *testing.T) {
+func TestReadUptimeEmptyDataError(t *testing.T) {
 	files := uptimeFiles()
 	files[uptimeFile] = ""
 
-	reader := uptimeReader{fs: procfs.New(tempDirWithFiles(t, files, 0o755, 0o600))}
+	reader := uptimeReader{fs: procfs.New(tempDirWithFiles(t, files))}
 
 	result, err := reader.read()
 
-	require.Error(t, err, ErrInsufficientUptime)
+	require.ErrorIs(t, err, ErrEmptyUptimeData)
 	assert.Equal(t, Uptime{}, result)
 }
 
@@ -67,25 +66,35 @@ func TestParseUptimeLineSuccess(t *testing.T) {
 	assert.Equal(t, expected, result)
 }
 
-func TestParseUptimeLineIncorrectMetricsCountErr(t *testing.T) {
-	result, err := parseUptimeLine("123")
-
-	require.ErrorIs(t, err, ErrInsufficientUptime)
-	require.Equal(t, Uptime{}, result)
-}
-
-func TestParseUptimeLineParseMetricsError(t *testing.T) {
-	data := []string{
-		"test 2025143.51",
-		"509124.78 test",
+func TestParseUptimeLineError(t *testing.T) {
+	cases := []struct {
+		name          string
+		line          string
+		expectedError error
+	}{
+		{
+			name:          "Incorrect data in the line",
+			line:          "2025143.5",
+			expectedError: ErrIncorrectUptimeData,
+		},
+		{
+			name:          "Total uptime metric is incorrect",
+			line:          "test 509124.78",
+			expectedError: strconv.ErrSyntax,
+		},
+		{
+			name:          "Idle uptime metric is incorrect",
+			line:          "509124.78 test",
+			expectedError: strconv.ErrSyntax,
+		},
 	}
 
-	for _, line := range data {
-		t.Run(line, func(t *testing.T) {
-			result, err := parseUptimeLine(line)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := parseUptimeLine(tc.line)
 
-			require.ErrorIs(t, err, strconv.ErrSyntax)
-			require.Equal(t, Uptime{}, result)
+			require.ErrorIs(t, err, tc.expectedError)
+			assert.Equal(t, Uptime{}, result)
 		})
 	}
 }

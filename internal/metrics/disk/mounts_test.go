@@ -1,13 +1,13 @@
 package disk
 
 import (
-	"fmt"
-	"syscall"
+	"io/fs"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tinkyrain/go-sysmon/internal/procfs"
+	"github.com/tinkyrain/go-sysmon/internal/statfs"
 )
 
 func mountsFiles() map[string]string {
@@ -34,12 +34,12 @@ func TestReadMountsSuccess(t *testing.T) {
 	}
 
 	reader := mountsReader{
-		fs: procfs.New(tempDirWithFiles(t, mountsFiles(), 0o755, 0o600)),
-		statfsFunc: func(path string) (syscall.Statfs_t, error) {
-			result := syscall.Statfs_t{}
-			result.Bsize = 10
+		fs: procfs.New(tempDirWithFiles(t, mountsFiles())),
+		statfs: func(string) (statfs.Stats, error) {
+			result := statfs.Stats{}
+			result.BlockSize = 10
 			result.Blocks = 12
-			result.Bavail = 5
+			result.Available = 5
 			return result, nil
 		},
 	}
@@ -50,86 +50,51 @@ func TestReadMountsSuccess(t *testing.T) {
 	assert.Equal(t, expected, result)
 }
 
-func TestReadMountsBlankFile(t *testing.T) {
-	files := mountsFiles()
-	files[mountFile] = ""
-
-	reader := mountsReader{
-		fs: procfs.New(tempDirWithFiles(t, files, 0o755, 0o600)),
-		statfsFunc: func(path string) (syscall.Statfs_t, error) {
-			result := syscall.Statfs_t{}
-			result.Bsize = 10
-			result.Blocks = 10
-			result.Bavail = 10
-			return result, nil
+func TestReadMountsError(t *testing.T) {
+	cases := []struct {
+		name               string
+		fileContent        string
+		statfsFunc         statfs.Func
+		expectedError      error
+		expectedReadResult []Mount
+	}{
+		{
+			name:               "Empty file",
+			fileContent:        "",
+			statfsFunc:         func(string) (statfs.Stats, error) { return statfs.Stats{}, nil },
+			expectedError:      ErrEmptyMountsData,
+			expectedReadResult: nil,
+		},
+		{
+			name:               "Not found suitable mounts",
+			fileContent:        "/dev/nvme0n1p1 /boot/efi vfat123 rw,relatime,fmask=0022,dmask=0022",
+			statfsFunc:         func(string) (statfs.Stats, error) { return statfs.Stats{}, nil },
+			expectedError:      ErrNoSuitableMountsData,
+			expectedReadResult: nil,
+		},
+		{
+			name:               "Statfs error",
+			fileContent:        "/dev/nvme0n1p5 / ext4 rw,relatime 0 0",
+			statfsFunc:         func(string) (statfs.Stats, error) { return statfs.Stats{}, fs.ErrNotExist },
+			expectedError:      fs.ErrNotExist,
+			expectedReadResult: nil,
 		},
 	}
 
-	result, err := reader.read()
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			files := mountsFiles()
+			files[mountFile] = tc.fileContent
 
-	require.ErrorIs(t, err, ErrEmptyMountsFile)
-	assert.Equal(t, []Mount{}, result)
-}
+			reader := mountsReader{
+				fs:     procfs.New(tempDirWithFiles(t, files)),
+				statfs: tc.statfsFunc,
+			}
 
-func TestReadMountsnecessaryMetricsNotFound(t *testing.T) {
-	files := mountsFiles()
-	files[mountFile] = "sysfs /sys sysfs rw,nosuid,nodev,noexec,relatime 0 0\nproc /proc proc rw,nosuid,nodev,noexec,relatime 0 0"
+			result, err := reader.read()
 
-	reader := mountsReader{
-		fs: procfs.New(tempDirWithFiles(t, files, 0o755, 0o600)),
-		statfsFunc: func(path string) (syscall.Statfs_t, error) {
-			result := syscall.Statfs_t{}
-			result.Bsize = 10
-			result.Blocks = 10
-			result.Bavail = 10
-			return result, nil
-		},
+			require.ErrorIs(t, err, tc.expectedError)
+			assert.Equal(t, tc.expectedReadResult, result)
+		})
 	}
-
-	result, err := reader.read()
-
-	require.ErrorIs(t, err, ErrNoMounts)
-	assert.Equal(t, []Mount{}, result)
-}
-
-func TestReadMountsFileNotFound(t *testing.T) {
-	files := mountsFiles()
-	delete(files, mountFile)
-
-	reader := mountsReader{
-		fs:         procfs.New(tempDirWithFiles(t, files, 0o755, 0o600)),
-		statfsFunc: func(path string) (syscall.Statfs_t, error) { return syscall.Statfs_t{}, nil },
-	}
-
-	result, err := reader.read()
-
-	require.Error(t, err)
-	assert.Equal(t, []Mount{}, result)
-}
-
-func TestReadMountsStatfsError(t *testing.T) {
-	reader := mountsReader{
-		fs:         procfs.New(tempDirWithFiles(t, mountsFiles(), 0o755, 0o600)),
-		statfsFunc: func(path string) (syscall.Statfs_t, error) { return syscall.Statfs_t{}, fmt.Errorf("statfs failed") },
-	}
-
-	result, err := reader.read()
-
-	require.Error(t, err)
-	assert.Equal(t, []Mount{}, result)
-}
-
-func TestReadMountsIncorrectMetricLine(t *testing.T) {
-	files := mountsFiles()
-	files[mountFile] = "/dev/nvme0n1p1"
-
-	reader := mountsReader{
-		fs:         procfs.New(tempDirWithFiles(t, files, 0o755, 0o600)),
-		statfsFunc: func(path string) (syscall.Statfs_t, error) { return syscall.Statfs_t{}, nil },
-	}
-
-	result, err := reader.read()
-
-	require.ErrorIs(t, err, ErrNoMounts)
-	assert.Equal(t, []Mount{}, result)
 }

@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -21,11 +22,22 @@ type MemInfo struct {
 	SwapAvailable uint64
 }
 
-func (r *meminfoReader) read() (MemInfo, error) {
+var (
+	ErrEmptyMemInfoData     = errors.New("meminfo data is empty")
+	ErrIncorrectMemInfoData = errors.New("meminfo data is incorrect")
+)
+
+func (r meminfoReader) read() (MemInfo, error) {
 	data, err := r.fs.ScanRows(meminfoFile)
 	if err != nil {
-		return MemInfo{}, err
+		return MemInfo{}, fmt.Errorf("scan %q: %w", meminfoFile, err)
 	}
+
+	if len(data) == 0 {
+		return MemInfo{}, fmt.Errorf("read %q: %w", meminfoFile, ErrEmptyMemInfoData)
+	}
+
+	dataHasMetric := map[string]struct{}{}
 
 	meminfo := MemInfo{}
 	info := map[string]*uint64{
@@ -45,11 +57,23 @@ func (r *meminfoReader) read() (MemInfo, error) {
 			if len(fields) == 0 {
 				continue
 			}
-			convetredValue, err := strconv.ParseUint(fields[0], 10, 64)
+			convertedValue, err := strconv.ParseUint(fields[0], 10, 64)
 			if err != nil {
-				return MemInfo{}, fmt.Errorf("error parsing metric %q value: %w", name, err)
+				return MemInfo{}, fmt.Errorf("parsing meminfo value %q: %w", name, err)
 			}
-			*info[name] = convetredValue * 1024 // Kb in bytes
+			dataHasMetric[name] = struct{}{}
+			*info[name] = convertedValue * 1024 // Kb in bytes
+		}
+	}
+
+	for metric := range info {
+		if _, ok := dataHasMetric[metric]; !ok {
+			return MemInfo{}, fmt.Errorf(
+				"read %q metric %q: %w",
+				meminfoFile,
+				metric,
+				ErrIncorrectMemInfoData,
+			)
 		}
 	}
 

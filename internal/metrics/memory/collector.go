@@ -14,7 +14,7 @@ func New(fs procfs.FileScanner) Collector {
 	}
 }
 
-func (c *Collector) Collect() (Stats, error) {
+func (c Collector) Collect() (Stats, error) {
 	memory, err := c.memoryReader.read()
 	if err != nil {
 		return Stats{}, err

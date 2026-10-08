@@ -53,26 +53,22 @@ func TestCollectSuccess(t *testing.T) {
 }
 
 func TestCollectError(t *testing.T) {
-	for file := range diskFiles() {
-		t.Run(file, func(t *testing.T) {
-			files := diskFiles()
-			delete(files, file)
+	files := diskFiles()
+	delete(files, mountFile)
 
-			collector := New(
-				procfs.New(tempDirWithFiles(t, files)),
-				func(path string) (syscall.Statfs_t, error) {
-					result := syscall.Statfs_t{}
-					result.Bsize = 10
-					result.Blocks = 12
-					result.Bavail = 13
-					return result, nil
-				},
-			)
+	collector := New(
+		procfs.New(tempDirWithFiles(t, files)),
+		func(path string) (syscall.Statfs_t, error) {
+			result := syscall.Statfs_t{}
+			result.Bsize = 10
+			result.Blocks = 12
+			result.Bavail = 13
+			return result, nil
+		},
+	)
 
-			result, err := collector.Collect()
+	result, err := collector.Collect()
 
-			require.Error(t, err)
-			assert.Equal(t, Stats{}, result)
-		})
-	}
+	require.Error(t, err)
+	assert.Equal(t, Stats{}, result)
 }

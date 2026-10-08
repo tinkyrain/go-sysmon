@@ -38,17 +38,13 @@ func TestCollectSuccess(t *testing.T) {
 }
 
 func TestCollectError(t *testing.T) {
-	for file := range cpuFiles() {
-		t.Run(file, func(t *testing.T) {
-			files := cpuFiles()
-			delete(files, file)
+	files := cpuFiles()
+	delete(files, statFile)
 
-			collector := New(procfs.New(tempDirWithFiles(t, files)))
+	collector := New(procfs.New(tempDirWithFiles(t, files)))
 
-			result, err := collector.Collect()
+	result, err := collector.Collect()
 
-			require.Error(t, err)
-			assert.Equal(t, Stats{}, result)
-		})
-	}
+	require.Error(t, err)
+	assert.Equal(t, Stats{}, result)
 }

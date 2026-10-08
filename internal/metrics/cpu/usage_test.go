@@ -1,6 +1,8 @@
 package cpu
 
 import (
+	"os"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -116,175 +118,200 @@ func TestReadUsageSuccess(t *testing.T) {
 	}
 }
 
-// func TestUsageReaderWithoutNecessaryLines(t *testing.T) {
-// 	files := usageFiles()
-// 	files[statFile] = ""
-//
-// 	reader := usageReader{
-// 		fs:               procfs.New(tempDirWithFiles(t, files)),
-// 		prevUsageSamples: map[string]usageSample{},
-// 	}
-//
-// 	result, err := reader.read()
-//
-// 	assert.ErrorIs(t, err, ErrEmptyStatData)
-// 	assert.Equal(t, Usage{}, result)
-// }
-//
-// func TestUsageReaderFileNotFound(t *testing.T) {
-// 	files := usageFiles()
-// 	delete(files, statFile)
-//
-// 	reader := usageReader{
-// 		fs:               procfs.New(tempDirWithFiles(t, files)),
-// 		prevUsageSamples: map[string]usageSample{},
-// 	}
-//
-// 	result, err := reader.read()
-//
-// 	require.Error(t, err)
-// 	assert.Equal(t, Usage{}, result)
-// }
-//
-// func TestUsageReaderFilterIncorrectLines(t *testing.T) {
-// 	expectedUsage := Usage{
-// 		Total: 0,
-// 		Cores: []CoreUsage{
-// 			{
-// 				ID:    "cpu0",
-// 				Usage: 0,
-// 			},
-// 		},
-// 	}
-//
-// 	files := usageFiles()
-// 	files[statFile] = "cpu 28683 104 7543 6\ncpu0 17496 72 6050 650357 437 0 376 0 0 0"
-//
-// 	reader := usageReader{
-// 		fs:               procfs.New(tempDirWithFiles(t, files)),
-// 		prevUsageSamples: map[string]usageSample{},
-// 	}
-//
-// 	result, err := reader.read()
-//
-// 	require.NoError(t, err)
-// 	assert.Equal(t, expectedUsage, result)
-// }
-//
-// func TestUsageReaderErrorConvertMetrics(t *testing.T) {
-// 	files := usageFiles()
-// 	files[statFile] = "cpu  298830 test 75896 7741115 5083 0 1586 0 0 0"
-//
-// 	reader := usageReader{
-// 		fs:               procfs.New(tempDirWithFiles(t, files)),
-// 		prevUsageSamples: map[string]usageSample{},
-// 	}
-//
-// 	result, err := reader.read()
-//
-// 	require.Error(t, err)
-// 	assert.Equal(t, Usage{}, result)
-// }
-//
-// func TestParseTicksLineSuccess(t *testing.T) {
-// 	expected := ticks{
-// 		id:        "ID",
-// 		user:      1,
-// 		nice:      2,
-// 		system:    3,
-// 		idle:      4,
-// 		iowait:    5,
-// 		irq:       6,
-// 		softirq:   7,
-// 		steal:     8,
-// 		guest:     9,
-// 		guestNice: 0,
-// 	}
-//
-// 	result, err := parseTicksLine([]string{"ID", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0"})
-//
-// 	require.NoError(t, err)
-// 	assert.Equal(t, expected, result)
-// }
-//
-// func TestParseTicksLineCountError(t *testing.T) {
-// 	result, err := parseTicksLine([]string{"1", "2", "3", "4"})
-//
-// 	assert.ErrorIs(t, err, ErrIncorrectStatData)
-// 	assert.Equal(t, ticks{}, result)
-// }
-//
-// func TestParseTicksLineParsingValueError(t *testing.T) {
-// 	result, err := parseTicksLine([]string{"ID", "1", "2", "3", "test", "1", "2", "3", "test", "1324", "333"})
-//
-// 	assert.ErrorIs(t, err, strconv.ErrSyntax)
-// 	assert.Equal(t, ticks{}, result)
-// }
-//
-// func TestCalculateUsageSuccess(t *testing.T) {
-// 	var expected float64 = 50
-// 	curCPUSample := usageSample{
-// 		total:   100,
-// 		idle:    250,
-// 		nonIdle: 350,
-// 	}
-// 	prevCPUSample := usageSample{
-// 		total:   80,
-// 		idle:    200,
-// 		nonIdle: 300,
-// 	}
-//
-// 	result := calculateUsage(prevCPUSample, curCPUSample)
-//
-// 	assert.Equal(t, expected, result)
-// }
-//
-// func TestCalculateUsagePrevTickIsBlank(t *testing.T) {
-// 	var expected float64 = 0
-// 	curCPUSample := usageSample{
-// 		total:   100,
-// 		idle:    250,
-// 		nonIdle: 350,
-// 	}
-// 	prevCPUSample := usageSample{}
-//
-// 	result := calculateUsage(prevCPUSample, curCPUSample)
-//
-// 	assert.Equal(t, expected, result)
-// }
-//
-// func TestCalculateUsagePrevTickGreaterCurrent(t *testing.T) {
-// 	var expected float64 = 0
-// 	curCPUSample := usageSample{
-// 		total:   80,
-// 		idle:    200,
-// 		nonIdle: 300,
-// 	}
-// 	prevCPUSample := usageSample{
-// 		total:   100,
-// 		idle:    250,
-// 		nonIdle: 350,
-// 	}
-//
-// 	result := calculateUsage(prevCPUSample, curCPUSample)
-//
-// 	assert.Equal(t, expected, result)
-// }
-//
-// func TestCalculateUsageNonIdleTotalAndDeltaTotalIsZero(t *testing.T) {
-// 	var expected float64 = 0
-// 	curCPUSample := usageSample{
-// 		total:   80,
-// 		idle:    200,
-// 		nonIdle: 300,
-// 	}
-// 	prevCPUSample := usageSample{
-// 		total:   100,
-// 		idle:    200,
-// 		nonIdle: 300,
-// 	}
-//
-// 	result := calculateUsage(prevCPUSample, curCPUSample)
-//
-// 	assert.Equal(t, expected, result)
-// }
+func TestReadUsageScanError(t *testing.T) {
+	files := usageFiles()
+	delete(files, statFile)
+
+	reader := usageReader{
+		fs:               procfs.New(tempDirWithFiles(t, files)),
+		prevUsageSamples: map[string]usageSample{},
+	}
+
+	result, err := reader.read()
+
+	require.ErrorIs(t, err, os.ErrNotExist)
+	assert.Equal(t, Usage{}, result)
+}
+
+func TestReadUsageEmptyDataError(t *testing.T) {
+	cases := []struct {
+		name        string
+		fileContent string
+	}{
+		{
+			name:        "Empty file",
+			fileContent: "",
+		},
+		{
+			name:        "Without cpu lines",
+			fileContent: "intr 30062225 138 0 0 0 0 0 0 1 0 7 0 0 0 0 0 0 0 0 0",
+		},
+		{
+			name:        "Cpu lines with insufficient ticks",
+			fileContent: "cpu  298830 3399 75896\ncpu0 17496 72 6050",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			files := usageFiles()
+			files[statFile] = tc.fileContent
+
+			reader := usageReader{
+				fs:               procfs.New(tempDirWithFiles(t, files)),
+				prevUsageSamples: map[string]usageSample{},
+			}
+
+			result, err := reader.read()
+
+			require.ErrorIs(t, err, ErrEmptyStatData)
+			assert.Equal(t, Usage{}, result)
+		})
+	}
+}
+
+func TestReadUsageConvertTicksError(t *testing.T) {
+	files := usageFiles()
+	files[statFile] = "cpu  298830 test 75896 7741115 5083 0 1586 0 0 0"
+
+	reader := usageReader{
+		fs:               procfs.New(tempDirWithFiles(t, files)),
+		prevUsageSamples: map[string]usageSample{},
+	}
+
+	result, err := reader.read()
+
+	require.ErrorIs(t, err, strconv.ErrSyntax)
+	assert.Equal(t, Usage{}, result)
+}
+
+func TestReadUsageSkipsUnsuitableLines(t *testing.T) {
+	expected := Usage{
+		Total: 0,
+		Cores: []CoreUsage{
+			{ID: "cpu0", Usage: 0},
+		},
+	}
+
+	files := usageFiles()
+	files[statFile] = `cpu 28683 104 7543 6
+cpu0 17496 72 6050 650357 437 0 376 0 0 0
+intr 30062225 138 0 0 0 0 0 0 1 0 7 0 0 0 0 0 0 0 0 0`
+
+	reader := usageReader{
+		fs:               procfs.New(tempDirWithFiles(t, files)),
+		prevUsageSamples: map[string]usageSample{},
+	}
+
+	result, err := reader.read()
+
+	require.NoError(t, err)
+	assert.Equal(t, expected, result)
+}
+
+func TestParseTicksLineSuccess(t *testing.T) {
+	expected := ticks{
+		id:        "cpu0",
+		user:      17496,
+		nice:      72,
+		system:    6050,
+		idle:      650357,
+		iowait:    437,
+		irq:       0,
+		softirq:   376,
+		steal:     0,
+		guest:     0,
+		guestNice: 0,
+	}
+
+	result, err := parseTicksLine([]string{
+		"cpu0", "17496", "72", "6050", "650357", "437", "0", "376", "0", "0", "0",
+	})
+
+	require.NoError(t, err)
+	assert.Equal(t, expected, result)
+}
+
+func TestParseTicksLineError(t *testing.T) {
+	cases := []struct {
+		name          string
+		line          []string
+		expectedError error
+	}{
+		{
+			name:          "Insufficient ticks in the line",
+			line:          []string{"cpu0", "17496", "72", "6050"},
+			expectedError: ErrIncorrectStatData,
+		},
+		{
+			name: "Convert tick value to uint error",
+			line: []string{
+				"cpu0", "17496", "test", "6050", "650357", "437", "0", "376", "0", "0", "0",
+			},
+			expectedError: strconv.ErrSyntax,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := parseTicksLine(tc.line)
+
+			require.ErrorIs(t, err, tc.expectedError)
+			assert.Equal(t, ticks{}, result)
+		})
+	}
+}
+
+func TestCalculateUsage(t *testing.T) {
+	cases := []struct {
+		name     string
+		prev     usageSample
+		cur      usageSample
+		expected float64
+	}{
+		{
+			name:     "Half of the ticks is busy",
+			prev:     usageSample{total: 500, idle: 200, nonIdle: 300},
+			cur:      usageSample{total: 600, idle: 250, nonIdle: 350},
+			expected: 50,
+		},
+		{
+			name:     "Prev sample is blank",
+			prev:     usageSample{},
+			cur:      usageSample{total: 600, idle: 250, nonIdle: 350},
+			expected: 0,
+		},
+		{
+			name:     "Idle ticks decreased",
+			prev:     usageSample{total: 550, idle: 250, nonIdle: 300},
+			cur:      usageSample{total: 550, idle: 200, nonIdle: 350},
+			expected: 0,
+		},
+		{
+			name:     "Non idle ticks decreased",
+			prev:     usageSample{total: 550, idle: 200, nonIdle: 350},
+			cur:      usageSample{total: 550, idle: 250, nonIdle: 300},
+			expected: 0,
+		},
+		{
+			name:     "Only idle ticks grew",
+			prev:     usageSample{total: 500, idle: 200, nonIdle: 300},
+			cur:      usageSample{total: 550, idle: 250, nonIdle: 300},
+			expected: 0,
+		},
+		{
+			name:     "Ticks did not change",
+			prev:     usageSample{total: 500, idle: 200, nonIdle: 300},
+			cur:      usageSample{total: 500, idle: 200, nonIdle: 300},
+			expected: 0,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := calculateUsage(tc.prev, tc.cur)
+
+			assert.Equal(t, tc.expected, result)
+		})
+	}
+}

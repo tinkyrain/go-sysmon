@@ -48,8 +48,8 @@ type Usage struct {
 }
 
 var (
-	ErrIncorrectStatData = errors.New("parsing CPU ticks need 10 metrics")
-	ErrEmptyStatData     = errors.New("no cpu lines in file")
+	ErrIncorrectStatData = errors.New("usage is incorrect")
+	ErrEmptyStatData     = errors.New("usage is empty")
 )
 
 func (r *usageReader) read() (Usage, error) {

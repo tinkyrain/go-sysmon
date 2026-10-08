@@ -9,9 +9,11 @@ import (
 	"github.com/tinkyrain/go-sysmon/internal/procfs"
 )
 
+type statfsFunc func(string) (syscall.Statfs_t, error)
+
 type mountsReader struct {
-	fs         procfs.FileScanner
-	statfsFunc func(string) (syscall.Statfs_t, error)
+	fs     procfs.FileScanner
+	statfs statfsFunc
 }
 
 type Mount struct {
@@ -72,7 +74,7 @@ func (r mountsReader) read() ([]Mount, error) {
 	mounts := []Mount{}
 
 	for _, path := range paths {
-		stat, err := r.statfsFunc(path)
+		stat, err := r.statfs(path)
 		if err != nil {
 			return nil, fmt.Errorf("read %q: %w", path, err)
 		}

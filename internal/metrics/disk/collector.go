@@ -1,8 +1,6 @@
 package disk
 
 import (
-	"syscall"
-
 	"github.com/tinkyrain/go-sysmon/internal/procfs"
 )
 
@@ -12,12 +10,12 @@ type Collector struct {
 
 func New(
 	fs procfs.FileScanner,
-	statfsFunc func(string) (syscall.Statfs_t, error),
+	statfs statfsFunc,
 ) Collector {
 	return Collector{
 		mountsReader: mountsReader{
-			fs:         fs,
-			statfsFunc: statfsFunc,
+			fs:     fs,
+			statfs: statfs,
 		},
 	}
 }

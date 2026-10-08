@@ -41,7 +41,7 @@ func (r uptimeReader) read() (Uptime, error) {
 func parseUptimeLine(line string) (Uptime, error) {
 	fields := strings.Fields(line)
 	if len(fields) < 2 {
-		return Uptime{}, fmt.Errorf("parse line: %w", ErrIncorrectUptimeData)
+		return Uptime{}, fmt.Errorf("parse line %q: %w", line, ErrIncorrectUptimeData)
 	}
 
 	var err error

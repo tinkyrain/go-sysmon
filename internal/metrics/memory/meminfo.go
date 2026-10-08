@@ -59,7 +59,7 @@ func (r meminfoReader) read() (MemInfo, error) {
 			}
 			convertedValue, err := strconv.ParseUint(fields[0], 10, 64)
 			if err != nil {
-				return MemInfo{}, fmt.Errorf("parsing metric %q value: %w", name, err)
+				return MemInfo{}, fmt.Errorf("parsing meminfo value %q: %w", name, err)
 			}
 			dataHasMetric[name] = struct{}{}
 			*info[name] = convertedValue * 1024 // Kb in bytes

@@ -45,7 +45,7 @@ func (r loadAvgReader) read() (LoadAvg, error) {
 func parseLoadAvgLine(line string) (LoadAvg, error) {
 	fields := strings.Fields(line)
 	if len(fields) < 5 {
-		return LoadAvg{}, fmt.Errorf("parse line: %w", ErrIncorrectLoadAvgData)
+		return LoadAvg{}, fmt.Errorf("parse line %q: %w", line, ErrIncorrectLoadAvgData)
 	}
 
 	var err error

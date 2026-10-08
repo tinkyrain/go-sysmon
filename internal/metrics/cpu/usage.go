@@ -48,8 +48,8 @@ type Usage struct {
 }
 
 var (
-	ErrIncorrectStatData = errors.New("usage is incorrect")
-	ErrEmptyStatData     = errors.New("usage is empty")
+	ErrIncorrectStatData = errors.New("usage data is incorrect")
+	ErrEmptyStatData     = errors.New("usage data is empty")
 )
 
 func (r *usageReader) read() (Usage, error) {
@@ -148,7 +148,7 @@ func parseTicksLine(line []string) (ticks, error) {
 	for _, value := range line {
 		convertedValue, err := strconv.ParseUint(value, 10, 64)
 		if err != nil {
-			return ticks{}, fmt.Errorf("parse value in line %q: %w", value, err)
+			return ticks{}, fmt.Errorf("parsing tick value %q: %w", value, err)
 		}
 		converted = append(converted, convertedValue)
 	}

@@ -2,6 +2,7 @@ package disk
 
 import (
 	"github.com/tinkyrain/go-sysmon/internal/procfs"
+	"github.com/tinkyrain/go-sysmon/internal/statfs"
 )
 
 type Collector struct {
@@ -10,7 +11,7 @@ type Collector struct {
 
 func New(
 	fs procfs.FileScanner,
-	statfs statfsFunc,
+	statfs statfs.Func,
 ) Collector {
 	return Collector{
 		mountsReader: mountsReader{

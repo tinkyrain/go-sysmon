@@ -2,12 +2,12 @@ package disk
 
 import (
 	"io/fs"
-	"syscall"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tinkyrain/go-sysmon/internal/procfs"
+	"github.com/tinkyrain/go-sysmon/internal/statfs"
 )
 
 func mountsFiles() map[string]string {
@@ -35,11 +35,11 @@ func TestReadMountsSuccess(t *testing.T) {
 
 	reader := mountsReader{
 		fs: procfs.New(tempDirWithFiles(t, mountsFiles())),
-		statfs: func(path string) (syscall.Statfs_t, error) {
-			result := syscall.Statfs_t{}
-			result.Bsize = 10
+		statfs: func(string) (statfs.Stats, error) {
+			result := statfs.Stats{}
+			result.BlockSize = 10
 			result.Blocks = 12
-			result.Bavail = 5
+			result.Available = 5
 			return result, nil
 		},
 	}
@@ -54,28 +54,28 @@ func TestReadMountsError(t *testing.T) {
 	cases := []struct {
 		name               string
 		fileContent        string
-		statfsFunc         statfsFunc
+		statfsFunc         statfs.Func
 		expectedError      error
 		expectedReadResult []Mount
 	}{
 		{
 			name:               "Empty file",
 			fileContent:        "",
-			statfsFunc:         func(string) (syscall.Statfs_t, error) { return syscall.Statfs_t{}, nil },
+			statfsFunc:         func(string) (statfs.Stats, error) { return statfs.Stats{}, nil },
 			expectedError:      ErrEmptyMountsData,
 			expectedReadResult: nil,
 		},
 		{
 			name:               "Not found suitable mounts",
 			fileContent:        "/dev/nvme0n1p1 /boot/efi vfat123 rw,relatime,fmask=0022,dmask=0022",
-			statfsFunc:         func(string) (syscall.Statfs_t, error) { return syscall.Statfs_t{}, nil },
+			statfsFunc:         func(string) (statfs.Stats, error) { return statfs.Stats{}, nil },
 			expectedError:      ErrNoSuitableMountsData,
 			expectedReadResult: nil,
 		},
 		{
 			name:               "Statfs error",
 			fileContent:        "/dev/nvme0n1p5 / ext4 rw,relatime 0 0",
-			statfsFunc:         func(string) (syscall.Statfs_t, error) { return syscall.Statfs_t{}, fs.ErrNotExist },
+			statfsFunc:         func(string) (statfs.Stats, error) { return statfs.Stats{}, fs.ErrNotExist },
 			expectedError:      fs.ErrNotExist,
 			expectedReadResult: nil,
 		},

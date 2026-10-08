@@ -1,12 +1,12 @@
 package disk
 
 import (
-	"syscall"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/tinkyrain/go-sysmon/internal/procfs"
+	"github.com/tinkyrain/go-sysmon/internal/statfs"
 )
 
 func diskFiles() map[string]string {
@@ -37,11 +37,11 @@ func TestCollectSuccess(t *testing.T) {
 
 	collector := New(
 		procfs.New(tempDirWithFiles(t, diskFiles())),
-		func(path string) (syscall.Statfs_t, error) {
-			result := syscall.Statfs_t{}
-			result.Bsize = 10
+		func(string) (statfs.Stats, error) {
+			result := statfs.Stats{}
+			result.BlockSize = 10
 			result.Blocks = 12
-			result.Bavail = 5
+			result.Available = 5
 			return result, nil
 		},
 	)
@@ -58,11 +58,11 @@ func TestCollectError(t *testing.T) {
 
 	collector := New(
 		procfs.New(tempDirWithFiles(t, files)),
-		func(path string) (syscall.Statfs_t, error) {
-			result := syscall.Statfs_t{}
-			result.Bsize = 10
+		func(string) (statfs.Stats, error) {
+			result := statfs.Stats{}
+			result.BlockSize = 10
 			result.Blocks = 12
-			result.Bavail = 13
+			result.Available = 13
 			return result, nil
 		},
 	)

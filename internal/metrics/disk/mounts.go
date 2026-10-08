@@ -4,16 +4,14 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-	"syscall"
 
 	"github.com/tinkyrain/go-sysmon/internal/procfs"
+	"github.com/tinkyrain/go-sysmon/internal/statfs"
 )
-
-type statfsFunc func(string) (syscall.Statfs_t, error)
 
 type mountsReader struct {
 	fs     procfs.FileScanner
-	statfs statfsFunc
+	statfs statfs.Func
 }
 
 type Mount struct {
@@ -78,11 +76,10 @@ func (r mountsReader) read() ([]Mount, error) {
 		if err != nil {
 			return nil, fmt.Errorf("read %q: %w", path, err)
 		}
-		blockSize := uint64(stat.Bsize)
 		mounts = append(mounts, Mount{
 			Path:      path,
-			Total:     stat.Blocks * blockSize,
-			Available: stat.Bavail * blockSize,
+			Total:     stat.Blocks * stat.BlockSize,
+			Available: stat.Available * stat.BlockSize,
 		})
 	}
 

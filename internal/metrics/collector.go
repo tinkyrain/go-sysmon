@@ -19,14 +19,14 @@ type Collector struct {
 	disk   disk.Collector
 }
 
-func New(procRoot string) *Collector {
+func New(procRoot string, statfsFunc statfs.Func) *Collector {
 	fs := procfs.New(procRoot)
 
 	return &Collector{
 		system: system.New(fs),
 		cpu:    cpu.New(fs),
 		memory: memory.New(fs),
-		disk:   disk.New(fs, statfs.GetDirStatfs),
+		disk:   disk.New(fs, statfsFunc),
 	}
 }
 

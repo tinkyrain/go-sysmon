@@ -16,9 +16,9 @@ func TestGetDirStatfs(t *testing.T) {
 	stat, err := statfs.GetDirStatfs(t.TempDir())
 
 	require.NoError(t, err)
-	assert.Positive(t, stat.Bsize)
+	assert.Positive(t, stat.BlockSize)
 	assert.Positive(t, stat.Blocks)
-	assert.LessOrEqual(t, stat.Bavail, stat.Blocks)
+	assert.LessOrEqual(t, stat.Available, stat.Blocks)
 }
 
 func TestGetDirStatfsOnFile(t *testing.T) {

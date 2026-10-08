@@ -12,6 +12,7 @@ import (
 	"github.com/tinkyrain/go-sysmon/internal/app"
 	"github.com/tinkyrain/go-sysmon/internal/config"
 	"github.com/tinkyrain/go-sysmon/internal/metrics"
+	"github.com/tinkyrain/go-sysmon/internal/statfs"
 )
 
 var (
@@ -49,7 +50,7 @@ func run(ctx context.Context) error {
 		return err
 	}
 
-	collector := metrics.New(cfg.ProcRoot)
+	collector := metrics.New(cfg.ProcRoot, statfs.GetDirStatfs)
 
 	// TODO: temporary stub until the new ui package is written
 	preview := func(snapshot metrics.Snapshot) {

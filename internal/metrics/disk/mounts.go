@@ -29,7 +29,7 @@ var fileSystemTypes = map[string]struct{}{
 	"xfs":     {},
 	"btrfs":   {},
 	"vfat":    {},
-	"ntfs":    {},
+	"ntfs3":   {},
 	"zfs":     {},
 	"fuseblk": {},
 	"ext2":    {},

@@ -1,4 +1,4 @@
-package config_test
+package config
 
 import (
 	"os"
@@ -7,15 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/tinkyrain/go-sysmon/internal/config"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-)
-
-const (
-	appName        = "go-sysmon"
-	configFileName = "config.toml"
 )
 
 func configPath(t *testing.T, filename, filecontent string, perm os.FileMode) string {
@@ -26,8 +19,8 @@ func configPath(t *testing.T, filename, filecontent string, perm os.FileMode) st
 	return path
 }
 
-func getDefaultConfig() config.Config {
-	return config.Config{
+func getDefaultConfig() Config {
+	return Config{
 		Interval: 3 * time.Second,
 		ProcRoot: "/proc",
 	}
@@ -35,12 +28,12 @@ func getDefaultConfig() config.Config {
 
 func TestConfigSuccessLoadFromFillFile(t *testing.T) {
 	path := "testdata/config.toml"
-	expected := config.Config{
+	expected := Config{
 		Interval: 8 * time.Second,
 		ProcRoot: "/test_proc/",
 	}
 
-	conf, err := config.Load(path)
+	conf, err := Load(path)
 
 	require.NoError(t, err)
 	assert.Equal(t, expected, conf)
@@ -50,7 +43,7 @@ func TestConfigFileNotFound(t *testing.T) {
 	path := "testdata/aodjdaof.toml"
 	expected := getDefaultConfig()
 
-	conf, err := config.Load(path)
+	conf, err := Load(path)
 
 	require.NoError(t, err)
 	assert.Equal(t, expected, conf)
@@ -58,13 +51,13 @@ func TestConfigFileNotFound(t *testing.T) {
 
 func TestConfigParseError(t *testing.T) {
 	path := configPath(t, "error_config.toml", "interval : '12s'\nerror: df", 0o600)
-	_, err := config.Load(path)
+	_, err := Load(path)
 	assert.ErrorContains(t, err, "failed to parse config file")
 }
 
 func TestConfigReadError(t *testing.T) {
 	path := configPath(t, "error_read_config.toml", "interval : '12s'\nerror: df", 0)
-	_, err := config.Load(path)
+	_, err := Load(path)
 	require.Error(t, err)
 }
 
@@ -73,7 +66,7 @@ func TestConfigSuccessLoadFromBlankFile(t *testing.T) {
 	path := configPath(t, "blank_config.toml", "", 0o600)
 	expected := getDefaultConfig()
 
-	conf, err := config.Load(path)
+	conf, err := Load(path)
 
 	require.NoError(t, err)
 	assert.Equal(t, expected, conf)
@@ -84,7 +77,7 @@ func TestConfigPartFill(t *testing.T) {
 	expected := getDefaultConfig()
 	expected.Interval = 12 * time.Second
 
-	conf, err := config.Load(path)
+	conf, err := Load(path)
 
 	require.NoError(t, err)
 	assert.Equal(t, expected, conf)
@@ -92,14 +85,14 @@ func TestConfigPartFill(t *testing.T) {
 
 func TestConfigValidateIntervalValue(t *testing.T) {
 	path := configPath(t, "invalid_interval_config.toml", "interval = '3ms'\nproc_root = '/proc_root'", 0o600)
-	_, err := config.Load(path)
-	assert.ErrorIs(t, err, config.ErrInvalidInterval)
+	_, err := Load(path)
+	assert.ErrorIs(t, err, ErrInvalidInterval)
 }
 
 func TestConfigValidateProcRootValue(t *testing.T) {
 	path := configPath(t, "invalid_proc_root_config.toml", "interval = '1s'\nproc_root = ''", 0o600)
-	_, err := config.Load(path)
-	assert.ErrorIs(t, err, config.ErrBlankProcRoot)
+	_, err := Load(path)
+	assert.ErrorIs(t, err, ErrBlankProcRoot)
 }
 
 func TestDefaultPathSuccess(t *testing.T) {
@@ -121,7 +114,7 @@ func TestDefaultPathSuccess(t *testing.T) {
 
 	expected := filepath.Join(expectedBase, appName, configFileName)
 
-	result, err := config.DefaultPath()
+	result, err := DefaultPath()
 
 	require.NoError(t, err)
 	assert.Equal(t, expected, result)
@@ -132,7 +125,7 @@ func TestDefaultPathError(t *testing.T) {
 	t.Setenv("AppData", "")
 	t.Setenv("XDG_CONFIG_HOME", "")
 
-	result, err := config.DefaultPath()
+	result, err := DefaultPath()
 
 	assert.Equal(t, "", result)
 	assert.Error(t, err)

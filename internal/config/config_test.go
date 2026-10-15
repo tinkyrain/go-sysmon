@@ -7,92 +7,120 @@ import (
 	"testing"
 	"time"
 
+	"github.com/BurntSushi/toml"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func configPath(t *testing.T, filename, filecontent string, perm os.FileMode) string {
+func configPath(t *testing.T, fileContent string) string {
 	t.Helper()
 	dir := t.TempDir()
-	path := filepath.Join(dir, filename)
-	require.NoError(t, os.WriteFile(path, []byte(filecontent), perm))
+	path := filepath.Join(dir, configFileName)
+	require.NoError(t, os.WriteFile(path, []byte(fileContent), 0o600))
 	return path
 }
 
-func getDefaultConfig() Config {
+func defaultConfig() Config {
 	return Config{
 		Interval: 3 * time.Second,
 		ProcRoot: "/proc",
 	}
 }
 
-func TestConfigSuccessLoadFromFillFile(t *testing.T) {
-	path := "testdata/config.toml"
-	expected := Config{
-		Interval: 8 * time.Second,
-		ProcRoot: "/test_proc/",
+func TestLoadSuccess(t *testing.T) {
+	cases := []struct {
+		name        string
+		fileContent string
+		expected    Config
+	}{
+		{
+			name: "Full config file",
+			fileContent: `title = "Example full config file"
+
+interval = "8s"
+proc_root = "/test_proc/"`,
+			expected: Config{
+				Interval: 8 * time.Second,
+				ProcRoot: "/test_proc/",
+			},
+		},
+		{
+			name:        "Blank config file",
+			fileContent: "",
+			expected:    defaultConfig(),
+		},
+		{
+			name:        "Only interval is filled",
+			fileContent: "interval = '12s'",
+			expected: Config{
+				Interval: 12 * time.Second,
+				ProcRoot: "/proc",
+			},
+		},
 	}
 
-	conf, err := Load(path)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := Load(configPath(t, tc.fileContent))
+
+			require.NoError(t, err)
+			assert.Equal(t, tc.expected, result)
+		})
+	}
+}
+
+func TestLoadFileNotFound(t *testing.T) {
+	result, err := Load(filepath.Join(t.TempDir(), configFileName))
 
 	require.NoError(t, err)
-	assert.Equal(t, expected, conf)
+	assert.Equal(t, defaultConfig(), result)
 }
 
-func TestConfigFileNotFound(t *testing.T) {
-	path := "testdata/aodjdaof.toml"
-	expected := getDefaultConfig()
+func TestLoadValidateError(t *testing.T) {
+	cases := []struct {
+		name          string
+		fileContent   string
+		expectedError error
+	}{
+		{
+			name:          "Interval is less than allowed",
+			fileContent:   "interval = '3ms'\nproc_root = '/proc'",
+			expectedError: ErrInvalidInterval,
+		},
+		{
+			name:          "Proc root is blank",
+			fileContent:   "interval = '1s'\nproc_root = ''",
+			expectedError: ErrBlankProcRoot,
+		},
+	}
 
-	conf, err := Load(path)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := Load(configPath(t, tc.fileContent))
 
-	require.NoError(t, err)
-	assert.Equal(t, expected, conf)
+			require.ErrorIs(t, err, tc.expectedError)
+			assert.Equal(t, Config{}, result)
+		})
+	}
 }
 
-func TestConfigParseError(t *testing.T) {
-	path := configPath(t, "error_config.toml", "interval : '12s'\nerror: df", 0o600)
-	_, err := Load(path)
-	assert.ErrorContains(t, err, "failed to parse config file")
+func TestLoadParseError(t *testing.T) {
+	var parseError toml.ParseError
+
+	result, err := Load(configPath(t, "interval : '12s'\nerror: df"))
+
+	require.ErrorAs(t, err, &parseError)
+	assert.Equal(t, Config{}, result)
 }
 
-func TestConfigReadError(t *testing.T) {
-	path := configPath(t, "error_read_config.toml", "interval : '12s'\nerror: df", 0)
-	_, err := Load(path)
+func TestLoadReadError(t *testing.T) {
+	path := filepath.Join(t.TempDir(), configFileName)
+	require.NoError(t, os.Mkdir(path, 0o755))
+
+	result, err := Load(path)
+
 	require.Error(t, err)
-}
-
-// will return default config
-func TestConfigSuccessLoadFromBlankFile(t *testing.T) {
-	path := configPath(t, "blank_config.toml", "", 0o600)
-	expected := getDefaultConfig()
-
-	conf, err := Load(path)
-
-	require.NoError(t, err)
-	assert.Equal(t, expected, conf)
-}
-
-func TestConfigPartFill(t *testing.T) {
-	path := configPath(t, "invalid_interval_config.toml", "interval = '12s'", 0o600)
-	expected := getDefaultConfig()
-	expected.Interval = 12 * time.Second
-
-	conf, err := Load(path)
-
-	require.NoError(t, err)
-	assert.Equal(t, expected, conf)
-}
-
-func TestConfigValidateIntervalValue(t *testing.T) {
-	path := configPath(t, "invalid_interval_config.toml", "interval = '3ms'\nproc_root = '/proc_root'", 0o600)
-	_, err := Load(path)
-	assert.ErrorIs(t, err, ErrInvalidInterval)
-}
-
-func TestConfigValidateProcRootValue(t *testing.T) {
-	path := configPath(t, "invalid_proc_root_config.toml", "interval = '1s'\nproc_root = ''", 0o600)
-	_, err := Load(path)
-	assert.ErrorIs(t, err, ErrBlankProcRoot)
+	assert.Equal(t, Config{}, result)
 }
 
 func TestDefaultPathSuccess(t *testing.T) {

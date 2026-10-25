@@ -1,0 +1,14 @@
+services:
+  dev:
+    build: .
+    working_dir: /app
+    volumes:
+      - .:/app
+      - go-mod-cache:/go/pkg/mod
+      - go-build-cache:/root/.cache/go-build
+    tty: true
+    stdin_open: true
+
+volumes:
+  go-mod-cache:
+  go-build-cache:

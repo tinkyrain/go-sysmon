@@ -2,90 +2,158 @@ package app_test
 
 import (
 	"context"
-	"fmt"
-	"os/signal"
-	"syscall"
+	"errors"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/tinkyrain/go-sysmon/internal/app"
 	"github.com/tinkyrain/go-sysmon/internal/config"
 	"github.com/tinkyrain/go-sysmon/internal/metrics"
 )
 
-func TestRunSuccessPreview(t *testing.T) {
-	config, err := config.Load("")
-	require.NoError(t, err)
+const (
+	tickInterval  = 10 * time.Millisecond
+	neverTick     = time.Hour
+	safetyTimeout = 2 * time.Second
+)
 
-	ctx, cancel := context.WithTimeout(context.Background(), config.Interval)
-	defer cancel()
+var errCollect = errors.New("collect failed")
 
-	config.Interval = 1 * time.Millisecond
+type mockRenderer struct {
+	mock.Mock
+}
 
-	ctx, stopSignals := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
-	defer stopSignals()
+func (m *mockRenderer) Render(snapshot metrics.Snapshot) {
+	m.Called(snapshot)
+}
 
-	collect := func() (metrics.Snapshot, error) {
+func (m *mockRenderer) Done() <-chan struct{} {
+	args := m.Called()
+	return args.Get(0).(<-chan struct{})
+}
+
+func (m *mockRenderer) Close() {
+	m.Called()
+}
+
+func newMockRenderer(done <-chan struct{}) *mockRenderer {
+	renderer := &mockRenderer{}
+	renderer.On("Done").Return(done)
+
+	return renderer
+}
+
+func blockedDone() <-chan struct{} {
+	return make(<-chan struct{})
+}
+
+func unusedCollect(t *testing.T) func() (metrics.Snapshot, error) {
+	t.Helper()
+
+	return func() (metrics.Snapshot, error) {
+		t.Error("collect must not be called")
+
 		return metrics.Snapshot{}, nil
 	}
+}
 
-	previewCalled := false
-	preview := func(metrics.Snapshot) {
-		previewCalled = true
-		stopSignals()
+func testSnapshot() metrics.Snapshot {
+	return metrics.Snapshot{
+		Time: time.Date(2026, time.October, 26, 12, 0, 0, 0, time.UTC),
+	}
+}
+
+func TestRunContextCanceled(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	renderer := newMockRenderer(blockedDone())
+
+	err := app.Run(ctx, config.Config{Interval: neverTick}, renderer, unusedCollect(t))
+
+	require.NoError(t, err)
+	renderer.AssertNumberOfCalls(t, "Render", 0)
+	renderer.AssertNumberOfCalls(t, "Close", 0)
+}
+
+func TestRunRendererDone(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), safetyTimeout)
+	defer cancel()
+
+	done := make(chan struct{})
+	close(done)
+	renderer := newMockRenderer(done)
+
+	err := app.Run(ctx, config.Config{Interval: neverTick}, renderer, unusedCollect(t))
+
+	require.NoError(t, err)
+	renderer.AssertNumberOfCalls(t, "Render", 0)
+	renderer.AssertNumberOfCalls(t, "Close", 0)
+}
+
+func TestRunRenderSnapshot(t *testing.T) {
+	expected := testSnapshot()
+
+	ctx, cancel := context.WithTimeout(context.Background(), safetyTimeout)
+	defer cancel()
+
+	renderer := newMockRenderer(blockedDone())
+	renderer.On("Render", mock.Anything).Run(func(mock.Arguments) { cancel() })
+
+	collect := func() (metrics.Snapshot, error) {
+		return expected, nil
 	}
 
-	_ = app.Run(ctx, config, collect, preview)
+	err := app.Run(ctx, config.Config{Interval: tickInterval}, renderer, collect)
 
-	assert.Equal(t, true, previewCalled)
+	require.NoError(t, err)
+	renderer.AssertCalled(t, "Render", expected)
+	renderer.AssertNumberOfCalls(t, "Close", 0)
 }
 
 func TestRunCollectError(t *testing.T) {
-	config, err := config.Load("")
-	require.NoError(t, err)
-
-	ctx, cancel := context.WithTimeout(context.Background(), config.Interval)
+	ctx, cancel := context.WithTimeout(context.Background(), safetyTimeout)
 	defer cancel()
 
-	config.Interval = 1 * time.Millisecond
-
-	ctx, stopSignals := signal.NotifyContext(ctx, syscall.SIGINT, syscall.SIGTERM)
-	defer stopSignals()
+	renderer := newMockRenderer(blockedDone())
 
 	collect := func() (metrics.Snapshot, error) {
-		return metrics.Snapshot{}, fmt.Errorf("Error")
+		return metrics.Snapshot{}, errCollect
 	}
 
-	preview := func(metrics.Snapshot) {}
+	err := app.Run(ctx, config.Config{Interval: tickInterval}, renderer, collect)
 
-	error := app.Run(ctx, config, collect, preview)
-
-	assert.Error(t, error)
+	require.ErrorIs(t, err, errCollect)
+	renderer.AssertNumberOfCalls(t, "Render", 0)
+	renderer.AssertNumberOfCalls(t, "Close", 0)
 }
 
 func TestRunCollectErrorInLoop(t *testing.T) {
-	config, err := config.Load("")
-	require.NoError(t, err)
-	config.Interval = 1 * time.Millisecond
+	expected := testSnapshot()
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), safetyTimeout)
 	defer cancel()
+
+	renderer := newMockRenderer(blockedDone())
+	renderer.On("Render", mock.Anything).Return()
 
 	calls := 0
 	collect := func() (metrics.Snapshot, error) {
 		calls++
 		if calls == 1 {
-			return metrics.Snapshot{}, nil
+			return expected, nil
 		}
-		return metrics.Snapshot{}, fmt.Errorf("Error")
+
+		return metrics.Snapshot{}, errCollect
 	}
 
-	preview := func(metrics.Snapshot) {}
+	err := app.Run(ctx, config.Config{Interval: tickInterval}, renderer, collect)
 
-	err = app.Run(ctx, config, collect, preview)
-
-	assert.Error(t, err)
-	assert.GreaterOrEqual(t, calls, 2)
+	require.ErrorIs(t, err, errCollect)
+	assert.Equal(t, 2, calls)
+	renderer.AssertNumberOfCalls(t, "Render", 1)
+	renderer.AssertCalled(t, "Render", expected)
 }

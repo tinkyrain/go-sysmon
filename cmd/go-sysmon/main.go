@@ -13,6 +13,7 @@ import (
 	"github.com/tinkyrain/go-sysmon/internal/config"
 	"github.com/tinkyrain/go-sysmon/internal/metrics"
 	"github.com/tinkyrain/go-sysmon/internal/statfs"
+	"github.com/tinkyrain/go-sysmon/internal/ui"
 )
 
 var (
@@ -52,12 +53,13 @@ func run(ctx context.Context) error {
 
 	collector := metrics.New(cfg.ProcRoot, statfs.GetDirStatfs)
 
-	// TODO: temporary stub until the new ui package is written
-	preview := func(snapshot metrics.Snapshot) {
-		fmt.Printf("%+v\n", snapshot)
+	ui, err := ui.Init()
+	if err != nil {
+		return err
 	}
+	defer ui.Close()
 
-	return app.Run(ctx, cfg, collector.Collect, preview)
+	return app.Run(ctx, cfg, ui, collector.Collect)
 }
 
 func versionString() string {

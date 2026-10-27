@@ -1,10 +1,9 @@
 package ui
 
 import (
-	"fmt"
-
 	tui "github.com/metaspartan/gotui/v5"
 	"github.com/tinkyrain/go-sysmon/internal/metrics"
+	"github.com/tinkyrain/go-sysmon/internal/ui/components"
 )
 
 type Renderer interface {
@@ -56,5 +55,10 @@ func (r *TuiRender) Done() <-chan struct{} {
 }
 
 func (r *TuiRender) Render(snapshot metrics.Snapshot) {
-	fmt.Println(123)
+	w, h := tui.TerminalDimensions()
+
+	layout := components.Layout(0, 0, w, h-3)
+	hints := components.Hints(0, h-3, w, h+3)
+
+	r.app.Backend.Render(layout, hints)
 }

@@ -6,47 +6,56 @@ import (
 )
 
 func Hints(x1, y1, x2, y2 int) *tui.Grid {
+	options := []struct {
+		title string
+		text  string
+	}{
+		{
+			title: "Quit",
+			text:  "Ctrl+C / Q",
+		},
+		{
+			title: "Tab switch",
+			text:  "Arrows / Tab",
+		},
+	}
 
-	quit := widgets.NewParagraph()
-	quit.Title = "Quit"
-	quit.Text = "Ctrl+C / Q"
+	spacer := widgets.NewParagraph()
+	spacer.Border = false
+	spacerCount := len(options) - 1
+	spacerRatio := 0.01
 
-	quit.TextStyle.Fg = tui.ColorBlack
-	quit.TextStyle.Bg = tui.ColorWhite
-	quit.BorderStyle.Fg = tui.ColorBlack
-	quit.BorderStyle.Bg = tui.ColorWhite
-	quit.TitleStyle.Fg = tui.ColorBlack
-	quit.TitleStyle.Bg = tui.ColorWhite
-	quit.BackgroundColor = tui.ColorWhite
+	hintRatio := (1.0 - (spacerRatio * float64(spacerCount))) / float64(len(options))
 
-	quit.SetRect(0, 0, 1, 1)
+	var hintCols []any
 
-	tab := widgets.NewParagraph()
-	tab.Title = "Tab switch"
-	tab.Text = "Arrows / Tab"
+	for key, option := range options {
+		hint := widgets.NewParagraph()
+		hint.Title = option.title
+		hint.Text = option.text
+		hint.TextStyle.Fg = tui.ColorBlack
+		hint.TextStyle.Bg = tui.ColorWhite
+		hint.BorderStyle.Fg = tui.ColorBlack
+		hint.BorderStyle.Bg = tui.ColorWhite
+		hint.TitleStyle.Fg = tui.ColorBlack
+		hint.TitleStyle.Bg = tui.ColorWhite
+		hint.BackgroundColor = tui.ColorWhite
+		hint.SetRect(key, 0, 1, 1)
 
-	tab.TextStyle.Fg = tui.ColorBlack
-	tab.TextStyle.Bg = tui.ColorWhite
-	tab.BorderStyle.Fg = tui.ColorBlack
-	tab.BorderStyle.Bg = tui.ColorWhite
-	tab.TitleStyle.Fg = tui.ColorBlack
-	tab.TitleStyle.Bg = tui.ColorWhite
-	tab.BackgroundColor = tui.ColorWhite
+		hintCols = append(hintCols, tui.NewCol(hintRatio, hint))
 
-	tab.SetRect(1, 0, 1, 1)
+		if key+1 < len(options) {
+			hintCols = append(hintCols, tui.NewCol(spacerRatio, spacer))
+		}
+	}
 
 	grid := tui.NewGrid()
 	grid.SetRect(x1, y1, x2, y2)
 
-	spacer := widgets.NewParagraph()
-	spacer.Border = false
-
 	grid.Set(
 		tui.NewRow(
 			1.0/2,
-			tui.NewCol(0.4995, quit),
-			tui.NewCol(0.001, spacer),
-			tui.NewCol(0.4995, tab),
+			hintCols...,
 		),
 	)
 

@@ -59,6 +59,7 @@ func (r *TuiRender) Render(snapshot metrics.Snapshot) {
 
 	layout := components.Layout(0, 0, w, h-3)
 	hints := components.Hints(0, h-3, w, h)
+	tab := components.Tabs(10, 0, 10, 2)
 
-	r.app.Backend.Render(layout, hints)
+	r.app.Backend.Render(layout, tab, hints)
 }

@@ -40,7 +40,6 @@ func Hints(x1, y1, x2, y2 int) *tui.Grid {
 		hint.TitleStyle.Fg = tui.ColorBlack
 		hint.TitleStyle.Bg = tui.ColorWhite
 		hint.BackgroundColor = tui.ColorWhite
-		hint.SetRect(key, 0, 1, 1)
 
 		hintCols = append(hintCols, tui.NewCol(hintRatio, hint))
 
@@ -54,7 +53,7 @@ func Hints(x1, y1, x2, y2 int) *tui.Grid {
 
 	grid.Set(
 		tui.NewRow(
-			1.0/2,
+			1,
 			hintCols...,
 		),
 	)

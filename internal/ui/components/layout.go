@@ -5,17 +5,10 @@ import (
 )
 
 func Layout(x1, y1, x2, y2 int) *tui.Block {
-	layout := &tui.Block{
-		Border:       true,
-		BorderStyle:  tui.NewStyle(tui.ColorWhite),
-		BorderLeft:   true,
-		BorderRight:  true,
-		BorderTop:    true,
-		BorderBottom: true,
-		BorderType:   tui.BorderLine,
-		Title:        "go-sysmon",
-		TitleStyle:   tui.NewStyle(tui.ColorWhite, tui.ColorClear, tui.ModifierBold),
-	}
+	layout := tui.NewBlock()
+	layout.BorderStyle = tui.NewStyle(tui.ColorWhite)
+	layout.Title = "go-sysmon"
+	layout.TitleStyle = tui.NewStyle(tui.ColorWhite, tui.ColorClear, tui.ModifierBold)
 	layout.SetRect(x1, y1, x2, y2)
 	return layout
 }

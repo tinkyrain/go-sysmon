@@ -11,9 +11,10 @@ func Tabs(x1, y1, x2, y2 int) *widgets.TabPane {
 
 	tabpane.Border = false
 	tabpane.ActiveTabStyle, tabpane.InactiveTabStyle =
-		tui.NewStyle(tui.ColorWhite, tui.ColorBlack),
-		tui.NewStyle(tui.ColorBlack, tui.ColorWhite)
+		tui.NewStyle(tui.ColorBlack, tui.ColorWhite),
+		tui.NewStyle(tui.ColorClear)
 	tabpane.PadRight, tabpane.PadLeft, tabpane.TabGap = 1, 1, 1
 	tabpane.Separator = ""
+
 	return tabpane
 }

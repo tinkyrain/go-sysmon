@@ -18,6 +18,10 @@ func Run(
 	ticker := time.NewTicker(cfg.Interval)
 	defer ticker.Stop()
 
+	if err := render(collect, renderer); err != nil {
+		return err
+	}
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -32,4 +36,13 @@ func Run(
 			renderer.Render(snapshot)
 		}
 	}
+}
+
+func render(collect func() (metrics.Snapshot, error), renderer ui.Renderer) error {
+	snapshot, err := collect()
+	if err != nil {
+		return err
+	}
+	renderer.Render(snapshot)
+	return nil
 }

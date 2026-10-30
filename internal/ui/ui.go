@@ -58,7 +58,7 @@ func (r *TuiRender) Render(snapshot metrics.Snapshot) {
 	w, h := tui.TerminalDimensions()
 	hintsHeight := 3
 
-	layout := components.Layout(0, 0, w, h-hintsHeight)
+	layout := components.Layout(snapshot.Time, 0, 0, w, h-hintsHeight)
 	hints := components.Hint(0, h-hintsHeight, w, h)
 	tab := components.Tab(0, w, 2)
 

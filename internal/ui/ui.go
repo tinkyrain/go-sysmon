@@ -59,8 +59,8 @@ func (r *TuiRender) Render(snapshot metrics.Snapshot) {
 	hintsHeight := 3
 
 	layout := components.Layout(0, 0, w, h-hintsHeight)
-	hints := components.Hints(0, h-hintsHeight, w, h)
-	tab := components.Tabs(0, w, 2)
+	hints := components.Hint(0, h-hintsHeight, w, h)
+	tab := components.Tab(0, w, 2)
 
 	r.app.Backend.Render(layout, tab, hints)
 }

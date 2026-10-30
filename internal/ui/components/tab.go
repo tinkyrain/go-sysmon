@@ -10,7 +10,7 @@ import (
 // Tabs - render tab row.
 // x1,x2 - allocated width coordinate
 // y - allocated row coordinate
-func Tabs(x1, x2, y int) *widgets.TabPane {
+func Tab(x1, x2, y int) *widgets.TabPane {
 	options := []string{"System", "CPU", "Memory", "Disk"}
 	gap, pl, pr := 1, 1, 1
 	tabWidth := 0

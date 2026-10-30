@@ -5,7 +5,7 @@ import (
 	"github.com/metaspartan/gotui/v5/widgets"
 )
 
-func Hints(x1, y1, x2, y2 int) *tui.Grid {
+func Hint(x1, y1, x2, y2 int) *tui.Grid {
 	options := []struct {
 		title string
 		text  string

@@ -56,13 +56,11 @@ func (r *TuiRender) Done() <-chan struct{} {
 
 func (r *TuiRender) Render(snapshot metrics.Snapshot) {
 	w, h := tui.TerminalDimensions()
-	tabSize := 50
-	startTabPoint := w/2 - tabSize/2
-	endTabPoint := w/2 + tabSize/2
+	hintsHeight := 3
 
-	layout := components.Layout(0, 0, w, h-3)
-	hints := components.Hints(0, h-3, w, h)
-	tab := components.Tabs(startTabPoint, 0, endTabPoint, 0)
+	layout := components.Layout(0, 0, w, h-hintsHeight)
+	hints := components.Hints(0, h-hintsHeight, w, h)
+	tab := components.Tabs(0, w, 2)
 
 	r.app.Backend.Render(layout, tab, hints)
 }

@@ -16,11 +16,12 @@ type Renderer interface {
 }
 
 type TuiRender struct {
+	once sync.Once
+	mu   sync.Mutex
+
 	app    *tui.Application
 	doneCh chan struct{} // channel for close ui
-	once   sync.Once
 
-	mu       sync.Mutex
 	tab      *widgets.TabPane
 	lastSnap metrics.Snapshot
 }
@@ -45,7 +46,7 @@ func (r *TuiRender) eventListener() {
 		events := r.app.Backend.PollEvents()
 		for e := range events {
 			switch e.ID {
-			case "q", "<C-c>":
+			case "q", "Q", "<C-c>":
 				r.doneCh <- struct{}{}
 				return
 			case "<Left>":

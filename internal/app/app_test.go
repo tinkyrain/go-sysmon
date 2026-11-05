@@ -20,7 +20,10 @@ const (
 	safetyTimeout = 2 * time.Second
 )
 
-var errCollect = errors.New("collect failed")
+var (
+	errCollect                   = errors.New("collect failed")
+	errCollectCalledMoreThanOnce = errors.New("collect can only be called once")
+)
 
 type mockRenderer struct {
 	mock.Mock
@@ -41,6 +44,7 @@ func (m *mockRenderer) Close() {
 
 func newMockRenderer(done <-chan struct{}) *mockRenderer {
 	renderer := &mockRenderer{}
+	renderer.On("Render", mock.Anything).Return()
 	renderer.On("Done").Return(done)
 
 	return renderer
@@ -50,12 +54,14 @@ func blockedDone() <-chan struct{} {
 	return make(<-chan struct{})
 }
 
-func unusedCollect(t *testing.T) func() (metrics.Snapshot, error) {
+func singleUseCollect(t *testing.T) func() (metrics.Snapshot, error) {
 	t.Helper()
-
+	calls := 0
 	return func() (metrics.Snapshot, error) {
-		t.Error("collect must not be called")
-
+		calls++
+		if calls > 1 {
+			return metrics.Snapshot{}, errCollectCalledMoreThanOnce
+		}
 		return metrics.Snapshot{}, nil
 	}
 }
@@ -72,10 +78,11 @@ func TestRunContextCanceled(t *testing.T) {
 
 	renderer := newMockRenderer(blockedDone())
 
-	err := app.Run(ctx, config.Config{Interval: neverTick}, renderer, unusedCollect(t))
+	err := app.Run(ctx, config.Config{Interval: neverTick}, renderer, singleUseCollect(t))
 
 	require.NoError(t, err)
-	renderer.AssertNumberOfCalls(t, "Render", 0)
+	renderer.AssertNumberOfCalls(t, "Render", 1)
+	renderer.AssertCalled(t, "Render", metrics.Snapshot{})
 	renderer.AssertNumberOfCalls(t, "Close", 0)
 }
 
@@ -87,10 +94,11 @@ func TestRunRendererDone(t *testing.T) {
 	close(done)
 	renderer := newMockRenderer(done)
 
-	err := app.Run(ctx, config.Config{Interval: neverTick}, renderer, unusedCollect(t))
+	err := app.Run(ctx, config.Config{Interval: neverTick}, renderer, singleUseCollect(t))
 
 	require.NoError(t, err)
-	renderer.AssertNumberOfCalls(t, "Render", 0)
+	renderer.AssertNumberOfCalls(t, "Render", 1)
+	renderer.AssertCalled(t, "Render", metrics.Snapshot{})
 	renderer.AssertNumberOfCalls(t, "Close", 0)
 }
 

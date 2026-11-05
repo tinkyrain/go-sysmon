@@ -16,11 +16,13 @@ type Renderer interface {
 }
 
 type TuiRender struct {
-	app       *tui.Application
-	doneCh    chan struct{} // channel for close ui
-	tab       *widgets.TabPane
-	activeTab int
-	once      sync.Once
+	app    *tui.Application
+	doneCh chan struct{} // channel for close ui
+	once   sync.Once
+
+	mu       sync.Mutex
+	tab      *widgets.TabPane
+	lastSnap metrics.Snapshot
 }
 
 func Init() (Renderer, error) {
@@ -39,10 +41,6 @@ func Init() (Renderer, error) {
 }
 
 func (r *TuiRender) eventListener() {
-	if r.tab == nil {
-		panic("Tab is not init")
-	}
-
 	go func() {
 		events := r.app.Backend.PollEvents()
 		for e := range events {
@@ -51,12 +49,37 @@ func (r *TuiRender) eventListener() {
 				r.doneCh <- struct{}{}
 				return
 			case "<Left>":
-				r.tab.FocusLeft()
-			case "<Right>", "<Tab>":
-				r.tab.FocusRight()
-			}
+				r.mu.Lock()
+				if r.tab != nil {
+					r.tab.FocusLeft()
+				}
+				snap := r.lastSnap
+				r.mu.Unlock()
 
-			r.app.Backend.Clear()
+				r.Render(snap)
+			case "<Right>":
+				r.mu.Lock()
+				if r.tab != nil {
+					r.tab.FocusRight()
+				}
+				snap := r.lastSnap
+				r.mu.Unlock()
+
+				r.Render(snap)
+			case "<Tab>":
+				r.mu.Lock()
+				if r.tab != nil {
+					if r.tab.ActiveTabIndex == len(r.tab.TabNames)-1 {
+						r.tab.ActiveTabIndex = 0
+					} else {
+						r.tab.FocusRight()
+					}
+				}
+				snap := r.lastSnap
+				r.mu.Unlock()
+
+				r.Render(snap)
+			}
 		}
 	}()
 }
@@ -70,6 +93,10 @@ func (r *TuiRender) Done() <-chan struct{} {
 }
 
 func (r *TuiRender) Render(snapshot metrics.Snapshot) {
+	r.mu.Lock()
+
+	r.lastSnap = snapshot
+
 	w, h := tui.TerminalDimensions()
 	hintsHeight := 3
 
@@ -82,14 +109,8 @@ func (r *TuiRender) Render(snapshot metrics.Snapshot) {
 	}
 	r.tab = tab
 
+	r.mu.Unlock()
+
 	r.once.Do(r.eventListener)
-
-	switch r.activeTab {
-	case 0:
-		r.tab.ActiveTabStyle = tui.NewStyle(tui.ColorWhite, tui.ColorBlue)
-	case 1:
-		r.tab.ActiveTabStyle = tui.NewStyle(tui.ColorWhite, tui.ColorBlue)
-	}
-
 	r.app.Backend.Render(layout, tab, hints)
 }

@@ -1,7 +1,10 @@
 package ui
 
 import (
+	"sync"
+
 	tui "github.com/metaspartan/gotui/v5"
+	"github.com/metaspartan/gotui/v5/widgets"
 	"github.com/tinkyrain/go-sysmon/internal/metrics"
 	"github.com/tinkyrain/go-sysmon/internal/ui/components"
 )
@@ -13,8 +16,11 @@ type Renderer interface {
 }
 
 type TuiRender struct {
-	app    *tui.Application
-	doneCh <-chan struct{} // channel for close ui
+	app       *tui.Application
+	doneCh    chan struct{} // channel for close ui
+	tab       *widgets.TabPane
+	activeTab int
+	once      sync.Once
 }
 
 func Init() (Renderer, error) {
@@ -25,7 +31,6 @@ func Init() (Renderer, error) {
 	}
 
 	doneCh := make(chan struct{})
-	eventListener(app, doneCh)
 
 	return &TuiRender{
 		app:    app,
@@ -33,15 +38,25 @@ func Init() (Renderer, error) {
 	}, nil
 }
 
-func eventListener(app *tui.Application, doneCh chan struct{}) {
+func (r *TuiRender) eventListener() {
+	if r.tab == nil {
+		panic("Tab is not init")
+	}
+
 	go func() {
-		events := app.Backend.PollEvents()
+		events := r.app.Backend.PollEvents()
 		for e := range events {
 			switch e.ID {
 			case "q", "<C-c>":
-				doneCh <- struct{}{}
+				r.doneCh <- struct{}{}
 				return
+			case "<Left>":
+				r.tab.FocusLeft()
+			case "<Right>", "<Tab>":
+				r.tab.FocusRight()
 			}
+
+			r.app.Backend.Clear()
 		}
 	}()
 }
@@ -60,7 +75,21 @@ func (r *TuiRender) Render(snapshot metrics.Snapshot) {
 
 	layout := components.Layout(snapshot.Time, 0, 0, w, h-hintsHeight)
 	hints := components.Hint(0, h-hintsHeight, w, h)
+
 	tab := components.Tab(0, w, 2)
+	if r.tab != nil {
+		tab.ActiveTabIndex = r.tab.ActiveTabIndex
+	}
+	r.tab = tab
+
+	r.once.Do(r.eventListener)
+
+	switch r.activeTab {
+	case 0:
+		r.tab.ActiveTabStyle = tui.NewStyle(tui.ColorWhite, tui.ColorBlue)
+	case 1:
+		r.tab.ActiveTabStyle = tui.NewStyle(tui.ColorWhite, tui.ColorBlue)
+	}
 
 	r.app.Backend.Render(layout, tab, hints)
 }

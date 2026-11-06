@@ -101,9 +101,10 @@ func (r *TuiRender) Render(snapshot metrics.Snapshot) {
 	contentStartX := 2             // take an offset from the main frame
 	contentStartY := tabHeight + 1 // take an offset from tabs
 	contentEndX := w - contentStartX
-	contentEndY := h - tabHeight - 2 // take an offset from the main frame and hints
+	contentEndY := h - hintsHeight - 1 // take an offset from the main frame and hints
 
 	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	r.lastSnap = snapshot
 
@@ -114,8 +115,6 @@ func (r *TuiRender) Render(snapshot metrics.Snapshot) {
 		tab.ActiveTabIndex = r.tab.ActiveTabIndex
 	}
 	r.tab = tab
-
-	r.mu.Unlock()
 
 	content := pages.SystemPage(snapshot.System, contentStartX, contentStartY, contentEndX, contentEndY)
 

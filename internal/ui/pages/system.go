@@ -2,6 +2,7 @@ package pages
 
 import (
 	"fmt"
+	"strings"
 
 	tui "github.com/metaspartan/gotui/v5"
 	"github.com/metaspartan/gotui/v5/widgets"
@@ -11,35 +12,23 @@ import (
 func SystemPage(stats system.Stats, x1, y1, x2, y2 int) *tui.Grid {
 	systemInfo := widgets.NewParagraph()
 	systemInfo.Title = "Info"
-	systemInfo.Text = fmt.Sprintf(`
-		Hostname: %s
-		OS: %s
-		Kernel: %s
-		Arch: %s
-	`,
-		stats.Info.Hostname,
-		stats.Info.OS,
-		stats.Info.Kernel,
-		stats.Info.Arch,
-	)
+	systemInfo.Text = strings.Join([]string{
+		fmt.Sprintf("Hostname: %s", stats.Info.Hostname),
+		fmt.Sprintf("OS: %s", stats.Info.OS),
+		fmt.Sprintf("Kernel: %s", stats.Info.Kernel),
+		fmt.Sprintf("Arch: %s", stats.Info.Arch),
+	}, "\n")
 
 	loadAvg := widgets.NewParagraph()
 	loadAvg.Title = "LoadAvg"
-	loadAvg.Text = fmt.Sprintf(`
-		One min: %.2f
-		Five min: %.2f
-		Fifteen min: %.2f
-		Running procs: %d
-		Total procs: %d
-		Last run PID: %d
-	`,
-		stats.LoadAvg.OneMin,
-		stats.LoadAvg.FiveMin,
-		stats.LoadAvg.FifteenMin,
-		stats.LoadAvg.RunningProcs,
-		stats.LoadAvg.TotalProcs,
-		stats.LoadAvg.LastPID,
-	)
+	loadAvg.Text = strings.Join([]string{
+		fmt.Sprintf("One min: %.2f", stats.LoadAvg.OneMin),
+		fmt.Sprintf("Five min: %.2f", stats.LoadAvg.FiveMin),
+		fmt.Sprintf("Fifteen min: %.2f", stats.LoadAvg.FifteenMin),
+		fmt.Sprintf("Running procs: %d", stats.LoadAvg.RunningProcs),
+		fmt.Sprintf("Total procs: %d", stats.LoadAvg.TotalProcs),
+		fmt.Sprintf("Last run PID: %d", stats.LoadAvg.LastPID),
+	}, "\n")
 
 	uptime := widgets.NewParagraph()
 	uptime.Title = "Uptime"

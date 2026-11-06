@@ -7,6 +7,7 @@ import (
 	"github.com/metaspartan/gotui/v5/widgets"
 	"github.com/tinkyrain/go-sysmon/internal/metrics"
 	"github.com/tinkyrain/go-sysmon/internal/ui/components"
+	"github.com/tinkyrain/go-sysmon/internal/ui/pages"
 )
 
 type Renderer interface {
@@ -94,17 +95,21 @@ func (r *TuiRender) Done() <-chan struct{} {
 }
 
 func (r *TuiRender) Render(snapshot metrics.Snapshot) {
+	w, h := tui.TerminalDimensions()
+	hintsHeight := 3
+	tabHeight := 2
+	contentStartX := 2             // take an offset from the main frame
+	contentStartY := tabHeight + 1 // take an offset from tabs
+	contentEndX := w - contentStartX
+	contentEndY := h - tabHeight - 2 // take an offset from the main frame and hints
+
 	r.mu.Lock()
 
 	r.lastSnap = snapshot
 
-	w, h := tui.TerminalDimensions()
-	hintsHeight := 3
-
 	layout := components.Layout(snapshot.Time, 0, 0, w, h-hintsHeight)
 	hints := components.Hint(0, h-hintsHeight, w, h)
-
-	tab := components.Tab(0, w, 2)
+	tab := components.Tab(0, w, tabHeight)
 	if r.tab != nil {
 		tab.ActiveTabIndex = r.tab.ActiveTabIndex
 	}
@@ -112,6 +117,8 @@ func (r *TuiRender) Render(snapshot metrics.Snapshot) {
 
 	r.mu.Unlock()
 
+	content := pages.SystemPage(snapshot.System, contentStartX, contentStartY, contentEndX, contentEndY)
+
 	r.once.Do(r.eventListener)
-	r.app.Backend.Render(layout, tab, hints)
+	r.app.Backend.Render(layout, tab, hints, content)
 }

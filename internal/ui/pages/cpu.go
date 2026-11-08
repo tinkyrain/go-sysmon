@@ -4,40 +4,48 @@ import (
 	"sort"
 
 	tui "github.com/metaspartan/gotui/v5"
+	"github.com/metaspartan/gotui/v5/widgets"
 	"github.com/tinkyrain/go-sysmon/internal/metrics/cpu"
 	"github.com/tinkyrain/go-sysmon/internal/ui/components"
 )
 
 func CPUPage(stats cpu.Stats, x1, y1, x2, y2 int) tui.Drawable {
-	totalUsage := components.UsageLine("Total", int(stats.Usage.Total))
-	coreLines := []any{}
+	usageRowSize := 3
 
-	// get top 7 usage cores for display
+	totalUsage := components.UsageLine("Total", int(stats.Usage.Total))
+
+	// sorted cpu cores by usages
 	cores := make([]cpu.CoreUsage, len(stats.Usage.Cores))
 	copy(cores, stats.Usage.Cores)
 	sort.Slice(cores, func(i, j int) bool {
 		return cores[i].Usage > cores[j].Usage
 	})
-	if len(cores) > 7 {
-		cores = cores[:7]
-	}
 
+	coresColumn := widgets.NewFlex()
+	coresColumn.Border = false
+	coresColumn.Direction = widgets.FlexColumn
 	for _, core := range cores {
-		rowHeight := 1.0 / float64(len(cores))
-		coreLines = append(
-			coreLines,
-			tui.NewRow(rowHeight, components.UsageLine(core.ID, int(core.Usage))),
-		)
+		coresColumn.AddItem(components.UsageLine(core.ID, int(core.Usage)), usageRowSize, 0, false)
 	}
 
-	grid := tui.NewGrid()
-	grid.SetRect(x1, y1, x2, y2)
-	grid.Set(
-		tui.NewRow(0.1, totalUsage),
-		tui.NewRow(0.9,
-			tui.NewCol(0.5, coreLines...),
-		),
-	)
+	emptyRight := widgets.NewFlex()
+	emptyRight.Border = false
+	emptyRight.Direction = widgets.FlexColumn
 
-	return grid
+	screenSplit := widgets.NewFlex()
+	screenSplit.Border = false
+	screenSplit.Direction = widgets.FlexRow
+
+	screenSplit.AddItem(coresColumn, 0, 1, false)
+	screenSplit.AddItem(emptyRight, 0, 1, false)
+
+	mainFlex := widgets.NewFlex()
+	mainFlex.Border = false
+	mainFlex.Direction = widgets.FlexColumn
+	mainFlex.AddItem(totalUsage, usageRowSize, 0, false)
+	mainFlex.AddItem(screenSplit, y2-y1-usageRowSize, 1, false)
+
+	mainFlex.SetRect(x1, y1, x2, y2)
+
+	return mainFlex
 }

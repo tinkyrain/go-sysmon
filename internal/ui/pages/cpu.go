@@ -8,7 +8,7 @@ import (
 	"github.com/tinkyrain/go-sysmon/internal/ui/components"
 )
 
-func CPUPage(stats cpu.Stats, x1, y1, x2, y2 int) *tui.Grid {
+func CPUPage(stats cpu.Stats, x1, y1, x2, y2 int) tui.Drawable {
 	totalUsage := components.UsageLine("Total", int(stats.Usage.Total))
 	coreLines := []any{}
 

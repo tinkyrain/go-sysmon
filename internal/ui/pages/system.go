@@ -9,7 +9,7 @@ import (
 	"github.com/tinkyrain/go-sysmon/internal/metrics/system"
 )
 
-func SystemPage(stats system.Stats, x1, y1, x2, y2 int) *tui.Grid {
+func SystemPage(stats system.Stats, x1, y1, x2, y2 int) tui.Drawable {
 	systemInfo := widgets.NewParagraph()
 	systemInfo.Title = "Info"
 	systemInfo.Text = strings.Join([]string{

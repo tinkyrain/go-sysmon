@@ -81,6 +81,12 @@ func (r *TuiRender) eventListener() {
 				r.mu.Unlock()
 
 				r.Render(snap)
+			case "<Resize>":
+				r.mu.Lock()
+				snap := r.lastSnap
+				r.mu.Unlock()
+
+				r.Render(snap)
 			}
 		}
 	}()

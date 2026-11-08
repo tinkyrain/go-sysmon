@@ -116,8 +116,16 @@ func (r *TuiRender) Render(snapshot metrics.Snapshot) {
 	}
 	r.tab = tab
 
-	content := pages.SystemPage(snapshot.System, contentStartX, contentStartY, contentEndX, contentEndY)
-
 	r.once.Do(r.eventListener)
-	r.app.Backend.Render(layout, tab, hints, content)
+	r.app.Backend.Render(layout, tab, hints, r.content(snapshot, contentStartX, contentStartY, contentEndX, contentEndY))
+}
+
+func (r *TuiRender) content(snapshot metrics.Snapshot, x1, y1, x2, y2 int) *tui.Grid {
+	// page system info - default page
+	content := pages.SystemPage(snapshot.System, x1, y1, x2, y2)
+	switch r.tab.ActiveTabIndex {
+	case 1:
+		content = pages.CPUPage(snapshot.CPU, x1, y1, x2, y2)
+	}
+	return content
 }

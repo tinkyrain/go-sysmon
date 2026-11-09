@@ -8,6 +8,7 @@ import (
 	"github.com/tinkyrain/go-sysmon/internal/metrics"
 	"github.com/tinkyrain/go-sysmon/internal/ui/components"
 	"github.com/tinkyrain/go-sysmon/internal/ui/pages"
+	"github.com/tinkyrain/go-sysmon/internal/ui/view"
 )
 
 type Renderer interface {
@@ -24,7 +25,7 @@ type TuiRender struct {
 	doneCh chan struct{} // channel for close ui
 
 	tab      *widgets.TabPane
-	lastSnap metrics.Snapshot
+	lastData view.RenderData
 }
 
 func Init() (Renderer, error) {
@@ -55,19 +56,19 @@ func (r *TuiRender) eventListener() {
 				if r.tab != nil {
 					r.tab.FocusLeft()
 				}
-				snap := r.lastSnap
+				data := r.lastData
 				r.mu.Unlock()
 
-				r.Render(snap)
+				r.draw(data)
 			case "<Right>":
 				r.mu.Lock()
 				if r.tab != nil {
 					r.tab.FocusRight()
 				}
-				snap := r.lastSnap
+				data := r.lastData
 				r.mu.Unlock()
 
-				r.Render(snap)
+				r.draw(data)
 			case "<Tab>":
 				r.mu.Lock()
 				if r.tab != nil {
@@ -77,16 +78,16 @@ func (r *TuiRender) eventListener() {
 						r.tab.FocusRight()
 					}
 				}
-				snap := r.lastSnap
+				data := r.lastData
 				r.mu.Unlock()
 
-				r.Render(snap)
+				r.draw(data)
 			case "<Resize>":
 				r.mu.Lock()
-				snap := r.lastSnap
+				data := r.lastData
 				r.mu.Unlock()
 
-				r.Render(snap)
+				r.draw(data)
 			}
 		}
 	}()
@@ -101,6 +102,10 @@ func (r *TuiRender) Done() <-chan struct{} {
 }
 
 func (r *TuiRender) Render(snapshot metrics.Snapshot) {
+	r.draw(view.NewRenderData(snapshot))
+}
+
+func (r *TuiRender) draw(data view.RenderData) {
 	w, h := tui.TerminalDimensions()
 	hintsHeight := 3
 	tabHeight := 2
@@ -112,9 +117,9 @@ func (r *TuiRender) Render(snapshot metrics.Snapshot) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	r.lastSnap = snapshot
+	r.lastData = data
 
-	layout := components.Layout(snapshot.Time, 0, 0, w, h-hintsHeight)
+	layout := components.Layout(data.Time, 0, 0, w, h-hintsHeight)
 	hints := components.Hint(0, h-hintsHeight, w, h)
 	tab := components.Tab(0, w, tabHeight)
 	if r.tab != nil {
@@ -123,22 +128,22 @@ func (r *TuiRender) Render(snapshot metrics.Snapshot) {
 	r.tab = tab
 
 	r.once.Do(r.eventListener)
-	r.app.Backend.Render(layout, tab, hints, r.content(snapshot, contentStartX, contentStartY, contentEndX, contentEndY))
+	r.app.Backend.Render(layout, tab, hints, r.content(data, contentStartX, contentStartY, contentEndX, contentEndY))
 }
 
-func (r *TuiRender) content(snapshot metrics.Snapshot, x1, y1, x2, y2 int) tui.Drawable {
+func (r *TuiRender) content(data view.RenderData, x1, y1, x2, y2 int) tui.Drawable {
 	var content tui.Drawable
 	switch r.tab.ActiveTabIndex {
 	case 0:
-		content = pages.SystemPage(snapshot.System, x1, y1, x2, y2)
+		content = pages.SystemPage(data.System, x1, y1, x2, y2)
 	case 1:
-		content = pages.CPUPage(snapshot.CPU, x1, y1, x2, y2)
+		content = pages.CPUPage(data.CPU, x1, y1, x2, y2)
 	case 2:
-		content = pages.MemoryPage(snapshot.Memory, x1, y1, x2, y2)
+		content = pages.MemoryPage(data.Memory, x1, y1, x2, y2)
 	case 3:
-		content = pages.DiskPage(snapshot.Disk, x1, y1, x2, y2)
-	default: // page system info - default page TODO - delete after implemets memory and disks
-		content = pages.SystemPage(snapshot.System, x1, y1, x2, y2)
+		content = pages.DiskPage(data.Disk, x1, y1, x2, y2)
+	default:
+		content = pages.SystemPage(data.System, x1, y1, x2, y2)
 	}
 	return content
 }

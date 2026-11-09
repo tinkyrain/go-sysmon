@@ -135,6 +135,8 @@ func (r *TuiRender) content(snapshot metrics.Snapshot, x1, y1, x2, y2 int) tui.D
 		content = pages.CPUPage(snapshot.CPU, x1, y1, x2, y2)
 	case 2:
 		content = pages.MemoryPage(snapshot.Memory, x1, y1, x2, y2)
+	case 3:
+		content = pages.DiskPage(snapshot.Disk, x1, y1, x2, y2)
 	default: // page system info - default page TODO - delete after implemets memory and disks
 		content = pages.SystemPage(snapshot.System, x1, y1, x2, y2)
 	}

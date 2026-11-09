@@ -10,9 +10,9 @@ import (
 )
 
 func SystemPage(stats system.Stats, x1, y1, x2, y2 int) tui.Drawable {
-	systemInfo := widgets.NewParagraph()
-	systemInfo.Title = "Info"
-	systemInfo.Text = strings.Join([]string{
+	info := widgets.NewParagraph()
+	info.Title = "Info"
+	info.Text = strings.Join([]string{
 		fmt.Sprintf("Hostname: %s", stats.Info.Hostname),
 		fmt.Sprintf("OS: %s", stats.Info.OS),
 		fmt.Sprintf("Kernel: %s", stats.Info.Kernel),
@@ -47,7 +47,7 @@ func SystemPage(stats system.Stats, x1, y1, x2, y2 int) tui.Drawable {
 	grid.Set(
 		tui.NewRow(
 			0.85,
-			tui.NewCol(0.5, systemInfo),
+			tui.NewCol(0.5, info),
 			tui.NewCol(0.5, loadAvg),
 		),
 		tui.NewRow(

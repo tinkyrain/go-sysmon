@@ -9,7 +9,10 @@ import (
 	"github.com/tinkyrain/go-sysmon/internal/ui/components"
 )
 
-const usageLineHeight = 3
+const (
+	usageLineHeight = 3
+	titleHeight     = 3
+)
 
 func CPUPage(stats cpu.Stats, x1, y1, x2, y2 int) tui.Drawable {
 	column := widgets.NewFlex()
@@ -27,9 +30,10 @@ func CPUPage(stats cpu.Stats, x1, y1, x2, y2 int) tui.Drawable {
 	coresTitle.Border = false
 	coresTitle.TextAlignment = tui.AlignCenter
 	coresTitle.Text = "Cores"
-	column.AddItem(coresTitle, 3, 1, false)
+	column.AddItem(coresTitle, titleHeight, 0, false)
 
-	coreCount := (y2-y1)/usageLineHeight - 1
+	headerHeight := usageLineHeight + titleHeight
+	coreCount := (y2 - y1 - headerHeight) / usageLineHeight
 	for _, core := range topCores(stats.Usage.Cores, coreCount) {
 		column.AddItem(components.UsageLine(core.ID, int(core.Usage)), usageLineHeight, 0, false)
 	}

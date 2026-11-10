@@ -13,7 +13,7 @@ type Stats struct {
 
 type Func func(dir string) (Stats, error)
 
-func GetDirStatfs(dir string) (Stats, error) {
+func Read(dir string) (Stats, error) {
 	var s syscall.Statfs_t
 	err := syscall.Statfs(dir, &s)
 	if err != nil {

@@ -12,8 +12,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetDirStatfs(t *testing.T) {
-	stat, err := statfs.GetDirStatfs(t.TempDir())
+func TestRead(t *testing.T) {
+	stat, err := statfs.Read(t.TempDir())
 
 	require.NoError(t, err)
 	assert.Positive(t, stat.BlockSize)
@@ -21,18 +21,18 @@ func TestGetDirStatfs(t *testing.T) {
 	assert.LessOrEqual(t, stat.Available, stat.Blocks)
 }
 
-func TestGetDirStatfsOnFile(t *testing.T) {
+func TestReadOnFile(t *testing.T) {
 	file := filepath.Join(t.TempDir(), "f")
 	require.NoError(t, os.WriteFile(file, nil, 0o600))
 
-	stat, err := statfs.GetDirStatfs(file)
+	stat, err := statfs.Read(file)
 
 	require.NoError(t, err)
 	assert.Positive(t, stat.Blocks)
 }
 
-func TestGetDirStatfsNotFound(t *testing.T) {
+func TestReadNotFound(t *testing.T) {
 	missing := filepath.Join(t.TempDir(), "nope")
-	_, err := statfs.GetDirStatfs(missing)
+	_, err := statfs.Read(missing)
 	require.ErrorIs(t, err, fs.ErrNotExist)
 }

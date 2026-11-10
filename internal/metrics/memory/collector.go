@@ -6,7 +6,7 @@ type Collector struct {
 	memoryReader meminfoReader
 }
 
-func New(fs procfs.FileScanner) Collector {
+func New(fs procfs.Reader) Collector {
 	return Collector{
 		memoryReader: meminfoReader{
 			fs: fs,

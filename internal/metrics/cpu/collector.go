@@ -6,7 +6,7 @@ type Collector struct {
 	usageReader *usageReader
 }
 
-func New(fs procfs.FileScanner) *Collector {
+func New(fs procfs.Reader) *Collector {
 	return &Collector{
 		usageReader: &usageReader{
 			fs: fs,

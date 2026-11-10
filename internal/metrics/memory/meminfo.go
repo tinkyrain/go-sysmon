@@ -12,7 +12,7 @@ import (
 const meminfoFile string = "meminfo"
 
 type meminfoReader struct {
-	fs procfs.FileScanner
+	fs procfs.Reader
 }
 
 type MemInfo struct {
@@ -28,9 +28,9 @@ var (
 )
 
 func (r meminfoReader) read() (MemInfo, error) {
-	data, err := r.fs.ScanRows(meminfoFile)
+	data, err := r.fs.ReadLines(meminfoFile)
 	if err != nil {
-		return MemInfo{}, fmt.Errorf("scan %q: %w", meminfoFile, err)
+		return MemInfo{}, fmt.Errorf("read %q: %w", meminfoFile, err)
 	}
 
 	if len(data) == 0 {

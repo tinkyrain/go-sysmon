@@ -51,15 +51,15 @@ func run(ctx context.Context) error {
 		return err
 	}
 
-	collector := metrics.New(cfg.ProcRoot, statfs.GetDirStatfs)
+	collector := metrics.New(cfg.ProcRoot, statfs.Read)
 
-	ui, err := ui.New()
+	renderer, err := ui.New()
 	if err != nil {
 		return err
 	}
-	defer ui.Close()
+	defer renderer.Close()
 
-	return app.Run(ctx, cfg, ui, collector.Collect)
+	return app.Run(ctx, cfg, renderer, collector.Collect)
 }
 
 func versionString() string {

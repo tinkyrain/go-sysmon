@@ -6,15 +6,15 @@ import (
 	"path/filepath"
 )
 
-type FileScanner struct {
+type Reader struct {
 	path string
 }
 
-func New(path string) FileScanner {
-	return FileScanner{path: path}
+func New(path string) Reader {
+	return Reader{path: path}
 }
 
-func (fs FileScanner) ScanRows(filename string) ([]string, error) {
+func (fs Reader) ReadLines(filename string) ([]string, error) {
 	f, err := os.Open(filepath.Join(fs.path, filename))
 	if err != nil {
 		return nil, err
@@ -37,7 +37,7 @@ func (fs FileScanner) ScanRows(filename string) ([]string, error) {
 	return lines, nil
 }
 
-func (fs FileScanner) ScanRow(filename string) (string, error) {
+func (fs Reader) ReadLine(filename string) (string, error) {
 	f, err := os.Open(filepath.Join(fs.path, filename))
 	if err != nil {
 		return "", err

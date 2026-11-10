@@ -12,7 +12,7 @@ import (
 const loadAvgFile = "loadavg"
 
 type loadAvgReader struct {
-	fs procfs.FileScanner
+	fs procfs.Reader
 }
 
 type LoadAvg struct {
@@ -30,9 +30,9 @@ var (
 )
 
 func (r loadAvgReader) read() (LoadAvg, error) {
-	data, err := r.fs.ScanRow(loadAvgFile)
+	data, err := r.fs.ReadLine(loadAvgFile)
 	if err != nil {
-		return LoadAvg{}, fmt.Errorf("scan %q: %w", loadAvgFile, err)
+		return LoadAvg{}, fmt.Errorf("read %q: %w", loadAvgFile, err)
 	}
 
 	if len(data) == 0 {

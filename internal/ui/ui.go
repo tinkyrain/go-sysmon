@@ -120,8 +120,8 @@ func (r *tuiRenderer) draw(data view.RenderData) {
 	r.lastData = data
 
 	layout := components.Layout(data.Time, 0, 0, w, h-hintsHeight)
-	hints := components.Hint(0, h-hintsHeight, w, h)
-	tab := components.Tab(0, w, tabHeight)
+	hints := components.Hints(0, h-hintsHeight, w, h)
+	tab := components.Tabs(0, w, tabHeight)
 	if r.tab != nil {
 		tab.ActiveTabIndex = r.tab.ActiveTabIndex
 	}

@@ -68,7 +68,7 @@ func cpuFrom(stats cpu.Stats) CPU {
 }
 
 func memoryFrom(stats memory.Stats) Memory {
-	info := stats.Memory
+	info := stats.Info
 
 	return Memory{
 		Info: []Field{

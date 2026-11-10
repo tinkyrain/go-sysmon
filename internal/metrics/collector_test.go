@@ -73,7 +73,7 @@ func TestCollectSuccess(t *testing.T) {
 			},
 		},
 		Memory: memory.Stats{
-			Memory: memory.MemInfo{
+			Info: memory.Info{
 				Total:         13315522560,
 				Available:     5244837888,
 				SwapTotal:     4294963200,

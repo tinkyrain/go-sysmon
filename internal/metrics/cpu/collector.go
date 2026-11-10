@@ -6,6 +6,7 @@ type Collector struct {
 	usageReader *usageReader
 }
 
+// New returns a pointer, because this one is stateful
 func New(fs procfs.Reader) *Collector {
 	return &Collector{
 		usageReader: &usageReader{

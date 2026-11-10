@@ -161,37 +161,37 @@ func TestNewRenderDataMemoryPercent(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		info     memory.MemInfo
+		info     memory.Info
 		wantRAM  int
 		wantSwap int
 	}{
 		{
 			name:     "half used",
-			info:     memory.MemInfo{Total: 16 * gib, Available: 8 * gib, SwapTotal: 8 * gib, SwapAvailable: 4 * gib},
+			info:     memory.Info{Total: 16 * gib, Available: 8 * gib, SwapTotal: 8 * gib, SwapAvailable: 4 * gib},
 			wantRAM:  50,
 			wantSwap: 50,
 		},
 		{
 			name:     "swap full reads as full, not as empty",
-			info:     memory.MemInfo{Total: 16 * gib, Available: 5 * gib, SwapTotal: 8 * gib, SwapAvailable: 0},
+			info:     memory.Info{Total: 16 * gib, Available: 5 * gib, SwapTotal: 8 * gib, SwapAvailable: 0},
 			wantRAM:  68,
 			wantSwap: 100,
 		},
 		{
 			name:     "no swap configured",
-			info:     memory.MemInfo{Total: 16 * gib, Available: 16 * gib},
+			info:     memory.Info{Total: 16 * gib, Available: 16 * gib},
 			wantRAM:  0,
 			wantSwap: 0,
 		},
 		{
 			name:     "zero total does not divide by zero",
-			info:     memory.MemInfo{},
+			info:     memory.Info{},
 			wantRAM:  0,
 			wantSwap: 0,
 		},
 		{
 			name:     "available larger than total is ignored",
-			info:     memory.MemInfo{Total: 1 * gib, Available: 2 * gib},
+			info:     memory.Info{Total: 1 * gib, Available: 2 * gib},
 			wantRAM:  0,
 			wantSwap: 0,
 		},
@@ -201,7 +201,7 @@ func TestNewRenderDataMemoryPercent(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			data := view.NewRenderData(metrics.Snapshot{Memory: memory.Stats{Memory: tt.info}})
+			data := view.NewRenderData(metrics.Snapshot{Memory: memory.Stats{Info: tt.info}})
 
 			assert.Equal(t, tt.wantRAM, data.Memory.RAM.Percent)
 			assert.Equal(t, tt.wantSwap, data.Memory.Swap.Percent)
@@ -214,7 +214,7 @@ func TestNewRenderDataMemoryPercent(t *testing.T) {
 func TestNewRenderDataFormatsMemorySizes(t *testing.T) {
 	t.Parallel()
 
-	data := view.NewRenderData(metrics.Snapshot{Memory: memory.Stats{Memory: memory.MemInfo{
+	data := view.NewRenderData(metrics.Snapshot{Memory: memory.Stats{Info: memory.Info{
 		Total: 16 * gib, Available: 5 * gib, SwapTotal: 8 * gib, SwapAvailable: 0,
 	}}})
 

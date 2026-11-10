@@ -52,42 +52,19 @@ func (r *tuiRenderer) eventListener() {
 				r.doneCh <- struct{}{}
 				return
 			case "<Left>":
-				r.mu.Lock()
-				if r.tab != nil {
-					r.tab.FocusLeft()
-				}
-				data := r.lastData
-				r.mu.Unlock()
-
-				r.draw(data)
+				r.redraw(func(tab *widgets.TabPane) { tab.FocusLeft() })
 			case "<Right>":
-				r.mu.Lock()
-				if r.tab != nil {
-					r.tab.FocusRight()
-				}
-				data := r.lastData
-				r.mu.Unlock()
-
-				r.draw(data)
+				r.redraw(func(tab *widgets.TabPane) { tab.FocusRight() })
 			case "<Tab>":
-				r.mu.Lock()
-				if r.tab != nil {
-					if r.tab.ActiveTabIndex == len(r.tab.TabNames)-1 {
-						r.tab.ActiveTabIndex = 0
+				r.redraw(func(tab *widgets.TabPane) {
+					if tab.ActiveTabIndex == len(tab.TabNames)-1 {
+						tab.ActiveTabIndex = 0
 					} else {
-						r.tab.FocusRight()
+						tab.FocusRight()
 					}
-				}
-				data := r.lastData
-				r.mu.Unlock()
-
-				r.draw(data)
+				})
 			case "<Resize>":
-				r.mu.Lock()
-				data := r.lastData
-				r.mu.Unlock()
-
-				r.draw(data)
+				r.redraw(nil)
 			}
 		}
 	}()
@@ -103,6 +80,17 @@ func (r *tuiRenderer) Done() <-chan struct{} {
 
 func (r *tuiRenderer) Render(snapshot metrics.Snapshot) {
 	r.draw(view.NewRenderData(snapshot))
+}
+
+func (r *tuiRenderer) redraw(change func(tab *widgets.TabPane)) {
+	r.mu.Lock()
+	if change != nil && r.tab != nil {
+		change(r.tab)
+	}
+	data := r.lastData
+	r.mu.Unlock()
+
+	r.draw(data)
 }
 
 func (r *tuiRenderer) draw(data view.RenderData) {
@@ -142,8 +130,6 @@ func (r *tuiRenderer) content(data view.RenderData, x1, y1, x2, y2 int) tui.Draw
 		content = pages.MemoryPage(data.Memory, x1, y1, x2, y2)
 	case 3:
 		content = pages.DiskPage(data.Disk, x1, y1, x2, y2)
-	default:
-		content = pages.SystemPage(data.System, x1, y1, x2, y2)
 	}
 	return content
 }

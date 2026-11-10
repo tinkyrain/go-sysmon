@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	usageLineHeight = 3
-	titleHeight     = 3
+	coreHeight       = 3
+	coresTitleHeight = 3
 )
 
 func CPUPage(data view.CPU, x1, y1, x2, y2 int) tui.Drawable {
@@ -18,28 +18,28 @@ func CPUPage(data view.CPU, x1, y1, x2, y2 int) tui.Drawable {
 	column.Direction = widgets.FlexColumn
 	column.SetRect(x1-1, y1-1, x2+1, y2+1)
 
-	if y2-y1 < usageLineHeight {
+	if y2-y1 < coreHeight {
 		return column
 	}
 
-	column.AddItem(components.UsageLine(data.Total.Label, data.Total.Percent), usageLineHeight, 0, false)
+	column.AddItem(components.UsageLine(data.Total.Label, data.Total.Percent), coreHeight, 0, false)
 
 	coresTitle := widgets.NewParagraph()
 	coresTitle.Border = false
 	coresTitle.TextAlignment = tui.AlignCenter
 	coresTitle.Text = "Cores"
-	column.AddItem(coresTitle, titleHeight, 0, false)
+	column.AddItem(coresTitle, coresTitleHeight, 0, false)
 
-	headerHeight := usageLineHeight + titleHeight
-	coreCount := (y2 - y1 - headerHeight) / usageLineHeight
-	for _, core := range topCores(data.Cores, coreCount) {
-		column.AddItem(components.UsageLine(core.Label, core.Percent), usageLineHeight, 0, false)
+	headerHeight := coreHeight + coresTitleHeight
+	coreCount := (y2 - y1 - headerHeight) / coreHeight
+	for _, core := range visibleCores(data.Cores, coreCount) {
+		column.AddItem(components.UsageLine(core.Label, core.Percent), coreHeight, 0, false)
 	}
 
 	return column
 }
 
-func topCores(cores []view.Gauge, count int) []view.Gauge {
+func visibleCores(cores []view.Gauge, count int) []view.Gauge {
 	if count < 1 {
 		return nil
 	}

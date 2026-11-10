@@ -8,7 +8,7 @@ import (
 func UsageLine(title string, percent int) *widgets.LineGauge {
 	line := widgets.NewLineGauge()
 	line.Title = title
-	line.Percent = int(percent)
+	line.Percent = percent
 	line.BarRune = '█'
 	line.BarRuneEmpty = '░'
 	line.LineColor = tui.ColorWhite

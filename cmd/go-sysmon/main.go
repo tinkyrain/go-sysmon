@@ -30,17 +30,17 @@ func main() {
 		return
 	}
 
-	// Context with stop notify
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	defer stop() // stop necessary for collect context resources
-
-	if err := run(ctx); err != nil {
+	if err := run(); err != nil {
 		fmt.Fprintln(os.Stderr, "go-sysmon error:", err)
 		os.Exit(1)
 	}
 }
 
-func run(ctx context.Context) error {
+func run() error {
+	// Context with stop notify
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop() // stop necessary for collect context resources
+
 	configFile, err := config.DefaultPath()
 	if err != nil {
 		return err

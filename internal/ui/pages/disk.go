@@ -15,7 +15,7 @@ func DiskPage(data view.Disk, x1, y1, x2, y2 int) tui.Drawable {
 	flex.SetRect(x1-1, y1-1, x2+1, y2+1)
 
 	mountCount := (y2 - y1) / mountHeight
-	for _, mount := range displayedMounts(data.Mounts, mountCount) {
+	for _, mount := range visibleMounts(data.Mounts, mountCount) {
 		widget := widgets.NewParagraph()
 		widget.Title = mount.Path
 		widget.Text = fieldsText(mount.Info)
@@ -25,7 +25,7 @@ func DiskPage(data view.Disk, x1, y1, x2, y2 int) tui.Drawable {
 	return flex
 }
 
-func displayedMounts(mounts []view.Mount, count int) []view.Mount {
+func visibleMounts(mounts []view.Mount, count int) []view.Mount {
 	if count < 1 {
 		return nil
 	}

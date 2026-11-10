@@ -24,7 +24,7 @@ Dirty:              1788 kB
 
 func TestCollectSuccess(t *testing.T) {
 	expected := Stats{
-		Memory: MemInfo{
+		Info: Info{
 			Total:         13315522560,
 			Available:     5244837888,
 			SwapTotal:     4294963200,

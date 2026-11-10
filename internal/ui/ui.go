@@ -17,7 +17,7 @@ type Renderer interface {
 	Close()
 }
 
-type TuiRender struct {
+type tuiRenderer struct {
 	once sync.Once
 	mu   sync.Mutex
 
@@ -28,7 +28,7 @@ type TuiRender struct {
 	lastData view.RenderData
 }
 
-func Init() (Renderer, error) {
+func New() (Renderer, error) {
 	app := tui.NewApp()
 
 	if err := app.Backend.Init(); err != nil {
@@ -37,13 +37,13 @@ func Init() (Renderer, error) {
 
 	doneCh := make(chan struct{})
 
-	return &TuiRender{
+	return &tuiRenderer{
 		app:    app,
 		doneCh: doneCh,
 	}, nil
 }
 
-func (r *TuiRender) eventListener() {
+func (r *tuiRenderer) eventListener() {
 	go func() {
 		events := r.app.Backend.PollEvents()
 		for e := range events {
@@ -93,19 +93,19 @@ func (r *TuiRender) eventListener() {
 	}()
 }
 
-func (r *TuiRender) Close() {
+func (r *tuiRenderer) Close() {
 	r.app.Backend.Close()
 }
 
-func (r *TuiRender) Done() <-chan struct{} {
+func (r *tuiRenderer) Done() <-chan struct{} {
 	return r.doneCh
 }
 
-func (r *TuiRender) Render(snapshot metrics.Snapshot) {
+func (r *tuiRenderer) Render(snapshot metrics.Snapshot) {
 	r.draw(view.NewRenderData(snapshot))
 }
 
-func (r *TuiRender) draw(data view.RenderData) {
+func (r *tuiRenderer) draw(data view.RenderData) {
 	w, h := tui.TerminalDimensions()
 	hintsHeight := 3
 	tabHeight := 2
@@ -131,7 +131,7 @@ func (r *TuiRender) draw(data view.RenderData) {
 	r.app.Backend.Render(layout, tab, hints, r.content(data, contentStartX, contentStartY, contentEndX, contentEndY))
 }
 
-func (r *TuiRender) content(data view.RenderData, x1, y1, x2, y2 int) tui.Drawable {
+func (r *tuiRenderer) content(data view.RenderData, x1, y1, x2, y2 int) tui.Drawable {
 	var content tui.Drawable
 	switch r.tab.ActiveTabIndex {
 	case 0:

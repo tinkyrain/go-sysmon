@@ -53,7 +53,7 @@ func run(ctx context.Context) error {
 
 	collector := metrics.New(cfg.ProcRoot, statfs.GetDirStatfs)
 
-	ui, err := ui.Init()
+	ui, err := ui.New()
 	if err != nil {
 		return err
 	}

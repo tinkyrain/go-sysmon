@@ -49,7 +49,7 @@ func (r *tuiRenderer) eventListener() {
 		for e := range events {
 			switch e.ID {
 			case "q", "Q", "<C-c>":
-				r.doneCh <- struct{}{}
+				close(r.doneCh)
 				return
 			case "<Left>":
 				r.redraw(func(tab *widgets.TabPane) { tab.FocusLeft() })

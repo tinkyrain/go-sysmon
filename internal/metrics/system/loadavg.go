@@ -1,0 +1,80 @@
+package system
+
+import (
+	"errors"
+	"fmt"
+	"strconv"
+	"strings"
+
+	"github.com/tinkyrain/go-sysmon/internal/procfs"
+)
+
+const loadAvgFile = "loadavg"
+
+type loadAvgReader struct {
+	fs procfs.Reader
+}
+
+type LoadAvg struct {
+	OneMin       float64
+	FiveMin      float64
+	FifteenMin   float64
+	RunningProcs uint64
+	TotalProcs   uint64
+	LastPID      uint64
+}
+
+var (
+	ErrIncorrectLoadAvgData = errors.New("loadavg data is incorrect")
+	ErrEmptyLoadAvgData     = errors.New("loadavg data is empty")
+)
+
+func (r loadAvgReader) read() (LoadAvg, error) {
+	data, err := r.fs.ReadLine(loadAvgFile)
+	if err != nil {
+		return LoadAvg{}, fmt.Errorf("read %q: %w", loadAvgFile, err)
+	}
+
+	if len(data) == 0 {
+		return LoadAvg{}, fmt.Errorf("read %q: %w", loadAvgFile, ErrEmptyLoadAvgData)
+	}
+
+	return parseLoadAvgLine(data)
+}
+
+func parseLoadAvgLine(line string) (LoadAvg, error) {
+	fields := strings.Fields(line)
+	if len(fields) < 5 {
+		return LoadAvg{}, fmt.Errorf("parse line %q: %w", line, ErrIncorrectLoadAvgData)
+	}
+
+	var err error
+	loadAvg := LoadAvg{}
+
+	if loadAvg.OneMin, err = strconv.ParseFloat(fields[0], 64); err != nil {
+		return LoadAvg{}, fmt.Errorf("parsing loadavg value %q: %w", fields[0], err)
+	}
+	if loadAvg.FiveMin, err = strconv.ParseFloat(fields[1], 64); err != nil {
+		return LoadAvg{}, fmt.Errorf("parsing loadavg value %q: %w", fields[1], err)
+	}
+	if loadAvg.FifteenMin, err = strconv.ParseFloat(fields[2], 64); err != nil {
+		return LoadAvg{}, fmt.Errorf("parsing loadavg value %q: %w", fields[2], err)
+	}
+	if loadAvg.LastPID, err = strconv.ParseUint(fields[4], 10, 64); err != nil {
+		return LoadAvg{}, fmt.Errorf("parsing loadavg value %q: %w", fields[4], err)
+	}
+
+	running, total, ok := strings.Cut(fields[3], "/")
+	if !ok {
+		return LoadAvg{}, fmt.Errorf("parsing loadavg value %q: %w", fields[3], ErrIncorrectLoadAvgData)
+	}
+
+	if loadAvg.RunningProcs, err = strconv.ParseUint(running, 10, 64); err != nil {
+		return LoadAvg{}, fmt.Errorf("parsing loadavg value %q: %w", running, err)
+	}
+	if loadAvg.TotalProcs, err = strconv.ParseUint(total, 10, 64); err != nil {
+		return LoadAvg{}, fmt.Errorf("parsing loadavg value %q: %w", total, err)
+	}
+
+	return loadAvg, nil
+}

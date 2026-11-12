@@ -1,5 +1,5 @@
 # Terminal system monitor for Linux
-CPU, memory and disk usage on one screen.
+System info, CPU, memory and disk usage on four tabs, one keypress apart.
 
 <img src="https://github.com/tinkyrain/go-sysmon/blob/main/preview.gif?raw=true" width="900" alt="go-sysmon work example">
 
@@ -24,9 +24,24 @@ go build -o go-sysmon ./cmd/go-sysmon
 ## Usage
 
 ```bash
-go-sysmon            # start the dashboard, Ctrl+C to quit
+go-sysmon            # start the dashboard
 go-sysmon --version  # print version
 ```
+
+| Key | Action |
+|---|---|
+| `←` `→` | previous / next tab |
+| `Tab` | next tab, wraps to the first |
+| `q` / `Ctrl+C` | quit |
+
+### Tabs
+
+- **System** — hostname, OS, kernel, architecture, load average and uptime
+- **CPU** — total load plus the busiest cores, as many as the window fits
+- **Memory** — RAM and swap, used percentage and absolute sizes
+- **Disk** — total and available space per mounted filesystem
+
+The layout follows the terminal: resize the window and the pages re-fit to it.
 
 ## Configuration
 

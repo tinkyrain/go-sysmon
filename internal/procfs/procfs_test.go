@@ -1,67 +1,178 @@
 package procfs_test
 
 import (
+	"bufio"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
-
-	"github.com/tinkyrain/go-sysmon/internal/procfs"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/tinkyrain/go-sysmon/internal/procfs"
 )
 
-func procfsDir(t *testing.T, file, filecontent string, perm os.FileMode) string {
-	t.Helper()
-	dir := t.TempDir()
-	require.NoError(t, os.WriteFile(filepath.Join(dir, file), []byte(filecontent), perm))
-	return dir
-}
-
-func getProcfsScanner(path string) procfs.FileScanner {
-	return procfs.New(path)
-}
-
-func TestProcfsScanSuccess(t *testing.T) {
-	scanner := getProcfsScanner("testdata/")
-	expected := []string{
-		"Lorem ipsum dolor sit amet, consectetur adipiscing elit",
-		"sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-		"Duis aute irure dolor in reprehenderit in voluptate velit",
+func TestProcfsReadLinesSuccess(t *testing.T) {
+	cases := []struct {
+		name     string
+		filename string
+		content  string
+		expected []string
+	}{
+		{
+			name:     "Successfully complete reading the file",
+			filename: "file",
+			content:  "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
+			expected: []string{"Lorem ipsum dolor sit amet, consectetur adipiscing elit"},
+		},
+		{
+			name:     "Successfully complete reading the file with many lines",
+			filename: "file",
+			content:  "Lorem ipsum\ndolor sit amet",
+			expected: []string{
+				"Lorem ipsum",
+				"dolor sit amet",
+			},
+		},
+		{
+			name:     "Successfully complete reading blank the file",
+			filename: "file",
+			content:  "",
+			expected: []string{},
+		},
 	}
 
-	rows, err := scanner.ScanRows("success_file")
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			dir := t.TempDir()
+			require.NoError(t, os.WriteFile(filepath.Join(dir, tc.filename), []byte(tc.content), 0o600))
 
-	require.NoError(t, err)
-	assert.Equal(t, expected, rows)
+			reader := procfs.New(dir)
+			lines, err := reader.ReadLines(tc.filename)
+
+			require.NoError(t, err)
+			assert.Equal(t, tc.expected, lines)
+		})
+	}
 }
 
-func TestProcfsScanError(t *testing.T) {
-	filename := "error_scan"
-	path := procfsDir(t, filename, "123123", 0)
-	scanner := getProcfsScanner(path)
+func TestProcfsReadLinesError(t *testing.T) {
+	cases := []struct {
+		name           string
+		targetFilename string
+		filename       string
+		content        string
+		expectedResult []string
+		expectedError  error
+	}{
+		{
+			name:           "File not found",
+			filename:       "file",
+			targetFilename: "file_not_found",
+			expectedResult: nil,
+			expectedError:  os.ErrNotExist,
+		},
+		{
+			name:           "File with line more 64 KB",
+			filename:       "file",
+			targetFilename: "file",
+			content:        strings.Repeat("A", 65*1024),
+			expectedResult: nil,
+			expectedError:  bufio.ErrTooLong,
+		},
+	}
 
-	_, err := scanner.ScanRows(filename)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			dir := t.TempDir()
+			require.NoError(t, os.WriteFile(filepath.Join(dir, tc.filename), []byte(tc.content), 0o600))
 
-	assert.Error(t, err)
+			reader := procfs.New(dir)
+			result, err := reader.ReadLines(tc.targetFilename)
+
+			require.ErrorIs(t, err, tc.expectedError)
+			assert.Equal(t, tc.expectedResult, result)
+		})
+	}
 }
 
-func TestProcfsScanFileNotFound(t *testing.T) {
-	path := procfsDir(t, "file_not_found", "", 0o600)
-	scanner := getProcfsScanner(path)
+func TestProcfsReadLineSuccess(t *testing.T) {
+	cases := []struct {
+		name     string
+		filename string
+		content  string
+		expected string
+	}{
+		{
+			name:     "Successfully complete reading the file",
+			filename: "file",
+			content:  "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
+			expected: "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
+		},
+		{
+			name:     "Successfully complete reading the file with many lines",
+			filename: "file",
+			content:  "Lorem ipsum\ndolor sit amet",
+			expected: "Lorem ipsum",
+		},
+		{
+			name:     "Successfully complete reading blank the file",
+			filename: "file",
+			content:  "",
+			expected: "",
+		},
+	}
 
-	_, err := scanner.ScanRows("fff_not_fff")
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			dir := t.TempDir()
+			require.NoError(t, os.WriteFile(filepath.Join(dir, tc.filename), []byte(tc.content), 0o600))
 
-	assert.Error(t, err)
+			reader := procfs.New(dir)
+			line, err := reader.ReadLine(tc.filename)
+
+			require.NoError(t, err)
+			assert.Equal(t, tc.expected, line)
+		})
+	}
 }
 
-func TestProcfsScanBlankFile(t *testing.T) {
-	filename := "blank_file"
-	path := procfsDir(t, filename, "", 0o600)
-	scanner := getProcfsScanner(path)
+func TestProcfsReadLineError(t *testing.T) {
+	cases := []struct {
+		name           string
+		targetFilename string
+		filename       string
+		content        string
+		expectedResult string
+		expectedError  error
+	}{
+		{
+			name:           "File not found",
+			filename:       "file",
+			targetFilename: "file_not_found",
+			expectedResult: "",
+			expectedError:  os.ErrNotExist,
+		},
+		{
+			name:           "File with line more 64 KB",
+			filename:       "file",
+			targetFilename: "file",
+			content:        strings.Repeat("A", 65*1024),
+			expectedResult: "",
+			expectedError:  bufio.ErrTooLong,
+		},
+	}
 
-	rows, err := scanner.ScanRows(filename)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			dir := t.TempDir()
+			require.NoError(t, os.WriteFile(filepath.Join(dir, tc.filename), []byte(tc.content), 0o600))
 
-	require.NoError(t, err)
-	assert.Equal(t, []string{}, rows)
+			reader := procfs.New(dir)
+			result, err := reader.ReadLine(tc.targetFilename)
+
+			require.ErrorIs(t, err, tc.expectedError)
+			assert.Equal(t, tc.expectedResult, result)
+		})
+	}
 }

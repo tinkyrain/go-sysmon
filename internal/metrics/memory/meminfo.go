@@ -1,0 +1,81 @@
+package memory
+
+import (
+	"errors"
+	"fmt"
+	"strconv"
+	"strings"
+
+	"github.com/tinkyrain/go-sysmon/internal/procfs"
+)
+
+const meminfoFile string = "meminfo"
+
+type meminfoReader struct {
+	fs procfs.Reader
+}
+
+type Info struct {
+	Total         uint64
+	Available     uint64
+	SwapTotal     uint64
+	SwapAvailable uint64
+}
+
+var (
+	ErrEmptyMemInfoData     = errors.New("meminfo data is empty")
+	ErrIncorrectMemInfoData = errors.New("meminfo data is incorrect")
+)
+
+func (r meminfoReader) read() (Info, error) {
+	data, err := r.fs.ReadLines(meminfoFile)
+	if err != nil {
+		return Info{}, fmt.Errorf("read %q: %w", meminfoFile, err)
+	}
+
+	if len(data) == 0 {
+		return Info{}, fmt.Errorf("read %q: %w", meminfoFile, ErrEmptyMemInfoData)
+	}
+
+	dataHasMetric := map[string]struct{}{}
+
+	meminfo := Info{}
+	info := map[string]*uint64{
+		"MemTotal":     &meminfo.Total,
+		"MemAvailable": &meminfo.Available,
+		"SwapTotal":    &meminfo.SwapTotal,
+		"SwapFree":     &meminfo.SwapAvailable,
+	}
+
+	for _, line := range data {
+		name, value, ok := strings.Cut(line, ":")
+		if !ok {
+			continue
+		}
+		if _, ok := info[name]; ok {
+			fields := strings.Fields(value)
+			if len(fields) == 0 {
+				continue
+			}
+			convertedValue, err := strconv.ParseUint(fields[0], 10, 64)
+			if err != nil {
+				return Info{}, fmt.Errorf("parsing meminfo value %q: %w", name, err)
+			}
+			dataHasMetric[name] = struct{}{}
+			*info[name] = convertedValue * 1024 // Kb in bytes
+		}
+	}
+
+	for metric := range info {
+		if _, ok := dataHasMetric[metric]; !ok {
+			return Info{}, fmt.Errorf(
+				"read %q metric %q: %w",
+				meminfoFile,
+				metric,
+				ErrIncorrectMemInfoData,
+			)
+		}
+	}
+
+	return meminfo, nil
+}

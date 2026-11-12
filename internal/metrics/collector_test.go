@@ -1,140 +1,169 @@
 package metrics
 
 import (
-	"errors"
-	"io/fs"
 	"os"
-	"path/filepath"
-	"syscall"
+	"runtime"
 	"testing"
 	"time"
 
-	"github.com/tinkyrain/go-sysmon/internal/procfs"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/tinkyrain/go-sysmon/internal/metrics/cpu"
+	"github.com/tinkyrain/go-sysmon/internal/metrics/disk"
+	"github.com/tinkyrain/go-sysmon/internal/metrics/memory"
+	"github.com/tinkyrain/go-sysmon/internal/metrics/system"
+	"github.com/tinkyrain/go-sysmon/internal/statfs"
 )
 
-const (
-	validMeminfo = "MemTotal:       13003440 kB\n" +
-		"MemAvailable:    5121912 kB\n" +
-		"SwapTotal:       4194300 kB\n" +
-		"SwapFree:        3383196 kB\n"
-
-	validMounts = "/dev/nvme0n1p5 / ext4 rw,relatime 0 0\n" +
-		"tmpfs /run tmpfs rw 0 0\n"
-
-	validStat = "cpu  298830 3399 75896 7741115 5083 0 1586 0 0 0\n" +
-		"cpu0 17496 72 6050 650357 437 0 376 0 0 0\n"
-)
-
-var errStatfsFail = errors.New("statfs failed")
-
-func okStatfs(string) (syscall.Statfs_t, error) {
-	return syscall.Statfs_t{Bsize: 1024, Blocks: 100, Bavail: 40}, nil
-}
-
-func errStatfs(string) (syscall.Statfs_t, error) {
-	return syscall.Statfs_t{}, errStatfsFail
-}
-
-func procDir(t *testing.T, files map[string]string) string {
-	t.Helper()
-	dir := t.TempDir()
-	for name, content := range files {
-		require.NoError(t, os.WriteFile(filepath.Join(dir, name), []byte(content), 0o600))
+func metricsFiles() map[string]string {
+	return map[string]string{
+		"sys/kernel/hostname":  "hostname",
+		"sys/kernel/osrelease": "osrelease",
+		"sys/kernel/ostype":    "ostype",
+		"loadavg":              "0.15 0.25 0.30 1/456 12345",
+		"uptime":               "509124.78 2025143.51",
+		"mounts":               "/dev/nvme0n1p5 / ext4 rw,relatime 0 0",
+		"meminfo": `
+MemTotal:       13003440 kB
+MemFree:          199488 kB
+MemAvailable:    5121912 kB
+SwapTotal:       4194300 kB
+SwapFree:        3383196 kB
+Dirty:              1788 kB
+		`,
+		"stat": `
+cpu  298830 3399 75896 7741115 5083 0 1586 0 0 0
+cpu0 17496 72 6050 650357 437 0 376 0 0 0
+cpu1 10757 57 3837 661024 159 0 1073 0 0 0
+intr 30062225 138 0 0 0 0 0 0 1 0 7 0 0 0 0 0 0 0 0 0
+`,
 	}
-	return dir
-}
-
-func newTestCollector(dir string, statfsFunc func(string) (syscall.Statfs_t, error)) *Collector {
-	fs := procfs.New(dir)
-	return &Collector{
-		memoryReader: MemoryReader{fs: fs},
-		diskReader:   DiskReader{fs: fs, statfsFunc: statfsFunc},
-		cpuReader:    CPUReader{fs: fs},
-	}
-}
-
-func TestNew(t *testing.T) {
-	c := New("/proc")
-
-	require.NotNil(t, c)
-	assert.Equal(t, procfs.New("/proc"), c.memoryReader.fs)
-	assert.Equal(t, procfs.New("/proc"), c.diskReader.fs)
-	assert.Equal(t, procfs.New("/proc"), c.cpuReader.fs)
-	assert.NotNil(t, c.diskReader.statfsFunc)
 }
 
 func TestCollectSuccess(t *testing.T) {
-	dir := procDir(t, map[string]string{
-		"meminfo": validMeminfo,
-		"mounts":  validMounts,
-		"stat":    validStat,
-	})
-	c := newTestCollector(dir, okStatfs)
+	expected := Snapshot{
+		Time: time.Now(),
+		System: system.Stats{
+			Info: system.Info{
+				Hostname: "hostname",
+				Kernel:   "osrelease",
+				OS:       "ostype",
+				Arch:     runtime.GOARCH,
+			},
+			LoadAvg: system.LoadAvg{
+				OneMin:       0.15,
+				FiveMin:      0.25,
+				FifteenMin:   0.30,
+				RunningProcs: 1,
+				TotalProcs:   456,
+				LastPID:      12345,
+			},
+			Uptime: system.Uptime{
+				Total: 509124.78,
+				Idle:  2025143.51,
+			},
+		},
+		CPU: cpu.Stats{
+			Usage: cpu.Usage{
+				Total: 0,
+				Cores: []cpu.CoreUsage{
+					{ID: "cpu0", Usage: 0},
+					{ID: "cpu1", Usage: 0},
+				},
+			},
+		},
+		Memory: memory.Stats{
+			Info: memory.Info{
+				Total:         13315522560,
+				Available:     5244837888,
+				SwapTotal:     4294963200,
+				SwapAvailable: 3464392704,
+			},
+		},
+		Disk: disk.Stats{
+			Mounts: []disk.Mount{
+				{
+					Path:      "/",
+					Total:     120,
+					Available: 50,
+				},
+			},
+		},
+	}
 
-	snap, err := c.Collect()
+	dir := tempDirWithFiles(t, metricsFiles())
+	collector := New(dir, func(path string) (statfs.Stats, error) {
+		result := statfs.Stats{}
+		result.BlockSize = 10
+		result.Blocks = 12
+		result.Available = 5
+		return result, nil
+	})
+
+	snapshot, err := collector.Collect()
+
+	snapshot.Time = expected.Time
 
 	require.NoError(t, err)
+	assert.Equal(t, expected, snapshot)
+}
 
-	assert.Equal(t, Memory{
-		Total:         13315522560,
-		Available:     5244837888,
-		SwapTotal:     4294963200,
-		SwapAvailable: 3464392704,
-	}, snap.Memory)
-
-	assert.Equal(t, []Disk{
-		{Mount: "/", Total: 100 * 1024, Available: 40 * 1024},
-	}, snap.Disks)
-
-	assert.Equal(t, CPU{
-		TotalUsage: 0,
-		Cores: []CPUUsage{
-			{ID: "cpu0", Usage: 0},
+func TestCollectError(t *testing.T) {
+	cases := []struct {
+		name       string
+		targetFile string
+	}{
+		{
+			name:       "File hostname is not exist",
+			targetFile: "sys/kernel/hostname",
 		},
-	}, snap.CPU)
+		{
+			name:       "File osrelease is not exist",
+			targetFile: "sys/kernel/osrelease",
+		},
+		{
+			name:       "File ostype is not exist",
+			targetFile: "sys/kernel/ostype",
+		},
+		{
+			name:       "File loadavg is not exist",
+			targetFile: "loadavg",
+		},
+		{
+			name:       "File uptime is not exist",
+			targetFile: "uptime",
+		},
+		{
+			name:       "File mounts is not exist",
+			targetFile: "mounts",
+		},
+		{
+			name:       "File meminfo is not exist",
+			targetFile: "meminfo",
+		},
+		{
+			name:       "File stat is not exist",
+			targetFile: "stat",
+		},
+	}
 
-	assert.WithinDuration(t, time.Now(), snap.Time, time.Minute)
-}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			files := metricsFiles()
+			delete(files, tc.targetFile)
 
-func TestCollectMemoryError(t *testing.T) {
-	dir := procDir(t, map[string]string{
-		"mounts": validMounts,
-		"stat":   validStat,
-	})
-	c := newTestCollector(dir, okStatfs)
+			collector := New(tempDirWithFiles(t, files), func(path string) (statfs.Stats, error) {
+				result := statfs.Stats{}
+				result.BlockSize = 10
+				result.Blocks = 12
+				result.Available = 5
+				return result, nil
+			})
 
-	_, err := c.Collect()
+			snapshot, err := collector.Collect()
 
-	require.Error(t, err)
-	assert.ErrorIs(t, err, fs.ErrNotExist)
-}
-
-func TestCollectDiskError(t *testing.T) {
-	dir := procDir(t, map[string]string{
-		"meminfo": validMeminfo,
-		"mounts":  validMounts,
-		"stat":    validStat,
-	})
-	c := newTestCollector(dir, errStatfs)
-
-	_, err := c.Collect()
-
-	require.Error(t, err)
-	assert.ErrorIs(t, err, errStatfsFail)
-}
-
-func TestCollectCPUError(t *testing.T) {
-	dir := procDir(t, map[string]string{
-		"meminfo": validMeminfo,
-		"mounts":  validMounts,
-	})
-	c := newTestCollector(dir, okStatfs)
-
-	_, err := c.Collect()
-
-	require.Error(t, err)
-	assert.ErrorIs(t, err, fs.ErrNotExist)
+			require.ErrorIs(t, err, os.ErrNotExist)
+			assert.Equal(t, Snapshot{}, snapshot)
+		})
+	}
 }

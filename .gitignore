@@ -5,6 +5,7 @@
 *.dylib
 
 *.test
+*.log
 
 *.out
 coverage.*
@@ -19,5 +20,6 @@ go.work.sum
 .idea/
 .claude/
 bin/
+.DS_store
 # Added by goreleaser init:
 dist/

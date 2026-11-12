@@ -1,0 +1,33 @@
+package disk
+
+import (
+	"github.com/tinkyrain/go-sysmon/internal/procfs"
+	"github.com/tinkyrain/go-sysmon/internal/statfs"
+)
+
+type Collector struct {
+	mountsReader mountsReader
+}
+
+func New(
+	fs procfs.Reader,
+	statfsFunc statfs.Func,
+) Collector {
+	return Collector{
+		mountsReader: mountsReader{
+			fs:         fs,
+			statfsFunc: statfsFunc,
+		},
+	}
+}
+
+func (c Collector) Collect() (Stats, error) {
+	mounts, err := c.mountsReader.read()
+	if err != nil {
+		return Stats{}, err
+	}
+
+	return Stats{
+		Mounts: mounts,
+	}, nil
+}

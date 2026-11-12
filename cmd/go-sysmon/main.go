@@ -12,6 +12,7 @@ import (
 	"github.com/tinkyrain/go-sysmon/internal/app"
 	"github.com/tinkyrain/go-sysmon/internal/config"
 	"github.com/tinkyrain/go-sysmon/internal/metrics"
+	"github.com/tinkyrain/go-sysmon/internal/statfs"
 	"github.com/tinkyrain/go-sysmon/internal/ui"
 )
 
@@ -29,17 +30,17 @@ func main() {
 		return
 	}
 
-	// Context with stop notify
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	defer stop() // stop needle for collect context resources
-
-	if err := run(ctx); err != nil {
+	if err := run(); err != nil {
 		fmt.Fprintln(os.Stderr, "go-sysmon error:", err)
 		os.Exit(1)
 	}
 }
 
-func run(ctx context.Context) error {
+func run() error {
+	// Context with stop notify
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop() // stop necessary for collect context resources
+
 	configFile, err := config.DefaultPath()
 	if err != nil {
 		return err
@@ -50,12 +51,15 @@ func run(ctx context.Context) error {
 		return err
 	}
 
-	dash := ui.NewDashboard()
-	defer dash.Stop()
+	collector := metrics.New(cfg.ProcRoot, statfs.Read)
 
-	collector := metrics.New(cfg.ProcRoot)
+	renderer, err := ui.New()
+	if err != nil {
+		return err
+	}
+	defer renderer.Close()
 
-	return app.Run(ctx, cfg, collector.Collect, dash.Render)
+	return app.Run(ctx, cfg, renderer, collector.Collect)
 }
 
 func versionString() string {

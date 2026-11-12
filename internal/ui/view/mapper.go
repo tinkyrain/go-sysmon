@@ -14,11 +14,12 @@ import (
 
 func NewRenderData(snapshot metrics.Snapshot) RenderData {
 	return RenderData{
-		Time:   snapshot.Time.Format(timeLayout),
-		System: systemFrom(snapshot.System),
-		CPU:    cpuFrom(snapshot.CPU),
-		Memory: memoryFrom(snapshot.Memory),
-		Disk:   diskFrom(snapshot.Disk),
+		Time:      snapshot.Time.Format(timeLayout),
+		Timestamp: snapshot.Time.Unix(),
+		System:    systemFrom(snapshot.System),
+		CPU:       cpuFrom(snapshot.CPU),
+		Memory:    memoryFrom(snapshot.Memory),
+		Disk:      diskFrom(snapshot.Disk),
 	}
 }
 

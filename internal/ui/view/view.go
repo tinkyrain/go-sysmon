@@ -11,11 +11,12 @@ type Gauge struct {
 }
 
 type RenderData struct {
-	Time   string
-	System System
-	CPU    CPU
-	Memory Memory
-	Disk   Disk
+	Time      string
+	Timestamp int64
+	System    System
+	CPU       CPU
+	Memory    Memory
+	Disk      Disk
 }
 
 type Uptime struct {

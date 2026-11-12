@@ -105,9 +105,11 @@ func (r *tuiRenderer) draw(data view.RenderData) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	r.lastData = data
+	if data.Timestamp > r.lastData.Timestamp {
+		r.lastData = data
+	}
 
-	layout := components.Layout(data.Time, 0, 0, w, h-hintsHeight)
+	layout := components.Layout(r.lastData.Time, 0, 0, w, h-hintsHeight)
 	hints := components.Hints(0, h-hintsHeight, w, h)
 	tab := components.Tabs(0, w, tabHeight)
 	if r.tab != nil {
@@ -116,7 +118,7 @@ func (r *tuiRenderer) draw(data view.RenderData) {
 	r.tab = tab
 
 	r.once.Do(r.eventListener)
-	r.app.Backend.Render(layout, tab, hints, r.content(data, contentStartX, contentStartY, contentEndX, contentEndY))
+	r.app.Backend.Render(layout, tab, hints, r.content(r.lastData, contentStartX, contentStartY, contentEndX, contentEndY))
 }
 
 func (r *tuiRenderer) content(data view.RenderData, x1, y1, x2, y2 int) tui.Drawable {

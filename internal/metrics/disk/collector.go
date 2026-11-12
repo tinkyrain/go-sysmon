@@ -10,13 +10,13 @@ type Collector struct {
 }
 
 func New(
-	fs procfs.FileScanner,
-	statfs statfs.Func,
+	fs procfs.Reader,
+	statfsFunc statfs.Func,
 ) Collector {
 	return Collector{
 		mountsReader: mountsReader{
-			fs:     fs,
-			statfs: statfs,
+			fs:         fs,
+			statfsFunc: statfsFunc,
 		},
 	}
 }

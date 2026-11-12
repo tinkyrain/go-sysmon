@@ -8,7 +8,7 @@ type Collector struct {
 	uptimeReader  uptimeReader
 }
 
-func New(fs procfs.FileScanner) Collector {
+func New(fs procfs.Reader) Collector {
 	return Collector{
 		infoReader:    infoReader{fs: fs},
 		loadAvgReader: loadAvgReader{fs: fs},

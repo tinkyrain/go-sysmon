@@ -20,7 +20,7 @@ func configPath(t *testing.T, fileContent string) string {
 	return path
 }
 
-func defaultConfig() Config {
+func expectedDefaultConfig() Config {
 	return Config{
 		Interval: 3 * time.Second,
 		ProcRoot: "/proc",
@@ -47,7 +47,7 @@ proc_root = "/test_proc/"`,
 		{
 			name:        "Blank config file",
 			fileContent: "",
-			expected:    defaultConfig(),
+			expected:    expectedDefaultConfig(),
 		},
 		{
 			name:        "Only interval is filled",
@@ -73,7 +73,7 @@ func TestLoadFileNotFound(t *testing.T) {
 	result, err := Load(filepath.Join(t.TempDir(), configFileName))
 
 	require.NoError(t, err)
-	assert.Equal(t, defaultConfig(), result)
+	assert.Equal(t, expectedDefaultConfig(), result)
 }
 
 func TestLoadValidateError(t *testing.T) {

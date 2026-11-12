@@ -6,7 +6,8 @@ type Collector struct {
 	usageReader *usageReader
 }
 
-func New(fs procfs.FileScanner) *Collector {
+// New returns a pointer, because this one is stateful
+func New(fs procfs.Reader) *Collector {
 	return &Collector{
 		usageReader: &usageReader{
 			fs: fs,

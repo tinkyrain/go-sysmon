@@ -12,10 +12,10 @@ import (
 const meminfoFile string = "meminfo"
 
 type meminfoReader struct {
-	fs procfs.FileScanner
+	fs procfs.Reader
 }
 
-type MemInfo struct {
+type Info struct {
 	Total         uint64
 	Available     uint64
 	SwapTotal     uint64
@@ -27,19 +27,19 @@ var (
 	ErrIncorrectMemInfoData = errors.New("meminfo data is incorrect")
 )
 
-func (r meminfoReader) read() (MemInfo, error) {
-	data, err := r.fs.ScanRows(meminfoFile)
+func (r meminfoReader) read() (Info, error) {
+	data, err := r.fs.ReadLines(meminfoFile)
 	if err != nil {
-		return MemInfo{}, fmt.Errorf("scan %q: %w", meminfoFile, err)
+		return Info{}, fmt.Errorf("read %q: %w", meminfoFile, err)
 	}
 
 	if len(data) == 0 {
-		return MemInfo{}, fmt.Errorf("read %q: %w", meminfoFile, ErrEmptyMemInfoData)
+		return Info{}, fmt.Errorf("read %q: %w", meminfoFile, ErrEmptyMemInfoData)
 	}
 
 	dataHasMetric := map[string]struct{}{}
 
-	meminfo := MemInfo{}
+	meminfo := Info{}
 	info := map[string]*uint64{
 		"MemTotal":     &meminfo.Total,
 		"MemAvailable": &meminfo.Available,
@@ -59,7 +59,7 @@ func (r meminfoReader) read() (MemInfo, error) {
 			}
 			convertedValue, err := strconv.ParseUint(fields[0], 10, 64)
 			if err != nil {
-				return MemInfo{}, fmt.Errorf("parsing meminfo value %q: %w", name, err)
+				return Info{}, fmt.Errorf("parsing meminfo value %q: %w", name, err)
 			}
 			dataHasMetric[name] = struct{}{}
 			*info[name] = convertedValue * 1024 // Kb in bytes
@@ -68,7 +68,7 @@ func (r meminfoReader) read() (MemInfo, error) {
 
 	for metric := range info {
 		if _, ok := dataHasMetric[metric]; !ok {
-			return MemInfo{}, fmt.Errorf(
+			return Info{}, fmt.Errorf(
 				"read %q metric %q: %w",
 				meminfoFile,
 				metric,

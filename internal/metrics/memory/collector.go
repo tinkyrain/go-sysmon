@@ -3,24 +3,24 @@ package memory
 import "github.com/tinkyrain/go-sysmon/internal/procfs"
 
 type Collector struct {
-	memoryReader meminfoReader
+	meminfoReader meminfoReader
 }
 
-func New(fs procfs.FileScanner) Collector {
+func New(fs procfs.Reader) Collector {
 	return Collector{
-		memoryReader: meminfoReader{
+		meminfoReader: meminfoReader{
 			fs: fs,
 		},
 	}
 }
 
 func (c Collector) Collect() (Stats, error) {
-	memory, err := c.memoryReader.read()
+	info, err := c.meminfoReader.read()
 	if err != nil {
 		return Stats{}, err
 	}
 
 	return Stats{
-		Memory: memory,
+		Info: info,
 	}, nil
 }

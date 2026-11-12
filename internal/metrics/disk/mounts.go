@@ -10,8 +10,8 @@ import (
 )
 
 type mountsReader struct {
-	fs     procfs.FileScanner
-	statfs statfs.Func
+	fs         procfs.Reader
+	statfsFunc statfs.Func
 }
 
 type Mount struct {
@@ -42,9 +42,9 @@ var (
 )
 
 func (r mountsReader) read() ([]Mount, error) {
-	data, err := r.fs.ScanRows(mountFile)
+	data, err := r.fs.ReadLines(mountFile)
 	if err != nil {
-		return nil, fmt.Errorf("scan %q: %w", mountFile, err)
+		return nil, fmt.Errorf("read %q: %w", mountFile, err)
 	}
 
 	if len(data) == 0 {
@@ -72,7 +72,7 @@ func (r mountsReader) read() ([]Mount, error) {
 	mounts := []Mount{}
 
 	for _, path := range paths {
-		stat, err := r.statfs(path)
+		stat, err := r.statfsFunc(path)
 		if err != nil {
 			return nil, fmt.Errorf("read %q: %w", path, err)
 		}

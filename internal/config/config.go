@@ -25,7 +25,7 @@ var (
 	ErrBlankProcRoot   = errors.New("proc root path cannot be empty")
 )
 
-func defaultSettings() Config {
+func defaultConfig() Config {
 	return Config{
 		Interval: 3 * time.Second,
 		ProcRoot: "/proc",
@@ -41,7 +41,7 @@ func DefaultPath() (string, error) {
 }
 
 func Load(path string) (Config, error) {
-	config := defaultSettings()
+	config := defaultConfig()
 
 	data, err := os.ReadFile(path) // read config file
 	if err != nil {

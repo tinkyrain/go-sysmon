@@ -35,7 +35,7 @@ func TestReadMountsSuccess(t *testing.T) {
 
 	reader := mountsReader{
 		fs: procfs.New(tempDirWithFiles(t, mountsFiles())),
-		statfs: func(string) (statfs.Stats, error) {
+		statfsFunc: func(string) (statfs.Stats, error) {
 			result := statfs.Stats{}
 			result.BlockSize = 10
 			result.Blocks = 12
@@ -87,8 +87,8 @@ func TestReadMountsError(t *testing.T) {
 			files[mountFile] = tc.fileContent
 
 			reader := mountsReader{
-				fs:     procfs.New(tempDirWithFiles(t, files)),
-				statfs: tc.statfsFunc,
+				fs:         procfs.New(tempDirWithFiles(t, files)),
+				statfsFunc: tc.statfsFunc,
 			}
 
 			result, err := reader.read()

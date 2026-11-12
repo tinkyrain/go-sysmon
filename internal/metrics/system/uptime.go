@@ -12,7 +12,7 @@ import (
 const uptimeFile = "uptime"
 
 type uptimeReader struct {
-	fs procfs.FileScanner
+	fs procfs.Reader
 }
 
 type Uptime struct {
@@ -26,9 +26,9 @@ var (
 )
 
 func (r uptimeReader) read() (Uptime, error) {
-	data, err := r.fs.ScanRow(uptimeFile)
+	data, err := r.fs.ReadLine(uptimeFile)
 	if err != nil {
-		return Uptime{}, fmt.Errorf("scan %q: %w", uptimeFile, err)
+		return Uptime{}, fmt.Errorf("read %q: %w", uptimeFile, err)
 	}
 
 	if len(data) == 0 {

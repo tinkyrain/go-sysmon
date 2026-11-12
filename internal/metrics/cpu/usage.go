@@ -13,7 +13,7 @@ const statFile = "stat"
 const cpuPrefix = "cpu"
 
 type usageReader struct {
-	fs               procfs.FileScanner
+	fs               procfs.Reader
 	prevUsageSamples map[string]usageSample
 }
 
@@ -53,9 +53,9 @@ var (
 )
 
 func (r *usageReader) read() (Usage, error) {
-	data, err := r.fs.ScanRows(statFile)
+	data, err := r.fs.ReadLines(statFile)
 	if err != nil {
-		return Usage{}, fmt.Errorf("scan %q: %w", statFile, err)
+		return Usage{}, fmt.Errorf("read %q: %w", statFile, err)
 	}
 
 	var lines [][]string

@@ -25,7 +25,7 @@ Dirty:              1788 kB
 }
 
 func TestReadMemInfoSuccess(t *testing.T) {
-	expected := MemInfo{
+	expected := Info{
 		Total:         13315522560,
 		Available:     5244837888,
 		SwapTotal:     4294963200,
@@ -49,7 +49,7 @@ func TestReadMemInfoScanError(t *testing.T) {
 	result, err := reader.read()
 
 	require.ErrorIs(t, err, os.ErrNotExist)
-	assert.Equal(t, MemInfo{}, result)
+	assert.Equal(t, Info{}, result)
 }
 
 func TestReadMemInfoError(t *testing.T) {
@@ -105,7 +105,7 @@ func TestReadMemInfoError(t *testing.T) {
 			result, err := reader.read()
 
 			require.ErrorIs(t, err, tc.expectedError)
-			assert.Equal(t, MemInfo{}, result)
+			assert.Equal(t, Info{}, result)
 		})
 	}
 }

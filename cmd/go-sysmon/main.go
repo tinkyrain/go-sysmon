@@ -13,6 +13,7 @@ import (
 	"github.com/tinkyrain/go-sysmon/internal/config"
 	"github.com/tinkyrain/go-sysmon/internal/metrics"
 	"github.com/tinkyrain/go-sysmon/internal/statfs"
+	"github.com/tinkyrain/go-sysmon/internal/ui"
 )
 
 var (
@@ -29,17 +30,17 @@ func main() {
 		return
 	}
 
-	// Context with stop notify
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	defer stop() // stop necessary for collect context resources
-
-	if err := run(ctx); err != nil {
+	if err := run(); err != nil {
 		fmt.Fprintln(os.Stderr, "go-sysmon error:", err)
 		os.Exit(1)
 	}
 }
 
-func run(ctx context.Context) error {
+func run() error {
+	// Context with stop notify
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop() // stop necessary for collect context resources
+
 	configFile, err := config.DefaultPath()
 	if err != nil {
 		return err
@@ -50,14 +51,15 @@ func run(ctx context.Context) error {
 		return err
 	}
 
-	collector := metrics.New(cfg.ProcRoot, statfs.GetDirStatfs)
+	collector := metrics.New(cfg.ProcRoot, statfs.Read)
 
-	// TODO: temporary stub until the new ui package is written
-	preview := func(snapshot metrics.Snapshot) {
-		fmt.Printf("%+v\n", snapshot)
+	renderer, err := ui.New()
+	if err != nil {
+		return err
 	}
+	defer renderer.Close()
 
-	return app.Run(ctx, cfg, collector.Collect, preview)
+	return app.Run(ctx, cfg, renderer, collector.Collect)
 }
 
 func versionString() string {

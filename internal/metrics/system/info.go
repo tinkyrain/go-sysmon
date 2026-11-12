@@ -15,7 +15,7 @@ const (
 )
 
 type infoReader struct {
-	fs procfs.FileScanner
+	fs procfs.Reader
 }
 
 type Info struct {
@@ -38,17 +38,17 @@ func (r infoReader) read() (Info, error) {
 	}
 
 	for file, value := range fileToValue {
-		row, err := r.fs.ScanRow(file)
+		line, err := r.fs.ReadLine(file)
 
 		if err != nil {
-			return Info{}, fmt.Errorf("scan %q: %w", file, err)
+			return Info{}, fmt.Errorf("read %q: %w", file, err)
 		}
 
-		if len(row) == 0 {
+		if len(line) == 0 {
 			return Info{}, fmt.Errorf("read %q: %w", file, ErrEmptyInfoData)
 		}
 
-		*value = row
+		*value = line
 	}
 
 	return info, nil

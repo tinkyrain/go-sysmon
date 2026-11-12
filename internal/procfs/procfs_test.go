@@ -12,7 +12,7 @@ import (
 	"github.com/tinkyrain/go-sysmon/internal/procfs"
 )
 
-func TestProcfsScanRowsSuccess(t *testing.T) {
+func TestProcfsReadLinesSuccess(t *testing.T) {
 	cases := []struct {
 		name     string
 		filename string
@@ -26,7 +26,7 @@ func TestProcfsScanRowsSuccess(t *testing.T) {
 			expected: []string{"Lorem ipsum dolor sit amet, consectetur adipiscing elit"},
 		},
 		{
-			name:     "Successfully complete reading the file with many rows",
+			name:     "Successfully complete reading the file with many lines",
 			filename: "file",
 			content:  "Lorem ipsum\ndolor sit amet",
 			expected: []string{
@@ -47,38 +47,38 @@ func TestProcfsScanRowsSuccess(t *testing.T) {
 			dir := t.TempDir()
 			require.NoError(t, os.WriteFile(filepath.Join(dir, tc.filename), []byte(tc.content), 0o600))
 
-			scanner := procfs.New(dir)
-			rows, err := scanner.ScanRows(tc.filename)
+			reader := procfs.New(dir)
+			lines, err := reader.ReadLines(tc.filename)
 
 			require.NoError(t, err)
-			assert.Equal(t, tc.expected, rows)
+			assert.Equal(t, tc.expected, lines)
 		})
 	}
 }
 
-func TestProcfsScanRowsError(t *testing.T) {
+func TestProcfsReadLinesError(t *testing.T) {
 	cases := []struct {
-		name               string
-		targetFilename     string
-		filename           string
-		content            string
-		expectedScanResult []string
-		expectedError      error
+		name           string
+		targetFilename string
+		filename       string
+		content        string
+		expectedResult []string
+		expectedError  error
 	}{
 		{
-			name:               "File not found",
-			filename:           "file",
-			targetFilename:     "file_not_found",
-			expectedScanResult: nil,
-			expectedError:      os.ErrNotExist,
+			name:           "File not found",
+			filename:       "file",
+			targetFilename: "file_not_found",
+			expectedResult: nil,
+			expectedError:  os.ErrNotExist,
 		},
 		{
-			name:               "File with row more 64 KB",
-			filename:           "file",
-			targetFilename:     "file",
-			content:            strings.Repeat("A", 65*1024),
-			expectedScanResult: nil,
-			expectedError:      bufio.ErrTooLong,
+			name:           "File with line more 64 KB",
+			filename:       "file",
+			targetFilename: "file",
+			content:        strings.Repeat("A", 65*1024),
+			expectedResult: nil,
+			expectedError:  bufio.ErrTooLong,
 		},
 	}
 
@@ -87,16 +87,16 @@ func TestProcfsScanRowsError(t *testing.T) {
 			dir := t.TempDir()
 			require.NoError(t, os.WriteFile(filepath.Join(dir, tc.filename), []byte(tc.content), 0o600))
 
-			scanner := procfs.New(dir)
-			result, err := scanner.ScanRows(tc.targetFilename)
+			reader := procfs.New(dir)
+			result, err := reader.ReadLines(tc.targetFilename)
 
 			require.ErrorIs(t, err, tc.expectedError)
-			assert.Equal(t, tc.expectedScanResult, result)
+			assert.Equal(t, tc.expectedResult, result)
 		})
 	}
 }
 
-func TestProcfsScanRowSuccess(t *testing.T) {
+func TestProcfsReadLineSuccess(t *testing.T) {
 	cases := []struct {
 		name     string
 		filename string
@@ -110,7 +110,7 @@ func TestProcfsScanRowSuccess(t *testing.T) {
 			expected: "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
 		},
 		{
-			name:     "Successfully complete reading the file with many rows",
+			name:     "Successfully complete reading the file with many lines",
 			filename: "file",
 			content:  "Lorem ipsum\ndolor sit amet",
 			expected: "Lorem ipsum",
@@ -128,38 +128,38 @@ func TestProcfsScanRowSuccess(t *testing.T) {
 			dir := t.TempDir()
 			require.NoError(t, os.WriteFile(filepath.Join(dir, tc.filename), []byte(tc.content), 0o600))
 
-			scanner := procfs.New(dir)
-			row, err := scanner.ScanRow(tc.filename)
+			reader := procfs.New(dir)
+			line, err := reader.ReadLine(tc.filename)
 
 			require.NoError(t, err)
-			assert.Equal(t, tc.expected, row)
+			assert.Equal(t, tc.expected, line)
 		})
 	}
 }
 
-func TestProcfsScanRowError(t *testing.T) {
+func TestProcfsReadLineError(t *testing.T) {
 	cases := []struct {
-		name               string
-		targetFilename     string
-		filename           string
-		content            string
-		expectedScanResult string
-		expectedError      error
+		name           string
+		targetFilename string
+		filename       string
+		content        string
+		expectedResult string
+		expectedError  error
 	}{
 		{
-			name:               "File not found",
-			filename:           "file",
-			targetFilename:     "file_not_found",
-			expectedScanResult: "",
-			expectedError:      os.ErrNotExist,
+			name:           "File not found",
+			filename:       "file",
+			targetFilename: "file_not_found",
+			expectedResult: "",
+			expectedError:  os.ErrNotExist,
 		},
 		{
-			name:               "File with row more 64 KB",
-			filename:           "file",
-			targetFilename:     "file",
-			content:            strings.Repeat("A", 65*1024),
-			expectedScanResult: "",
-			expectedError:      bufio.ErrTooLong,
+			name:           "File with line more 64 KB",
+			filename:       "file",
+			targetFilename: "file",
+			content:        strings.Repeat("A", 65*1024),
+			expectedResult: "",
+			expectedError:  bufio.ErrTooLong,
 		},
 	}
 
@@ -168,11 +168,11 @@ func TestProcfsScanRowError(t *testing.T) {
 			dir := t.TempDir()
 			require.NoError(t, os.WriteFile(filepath.Join(dir, tc.filename), []byte(tc.content), 0o600))
 
-			scanner := procfs.New(dir)
-			result, err := scanner.ScanRow(tc.targetFilename)
+			reader := procfs.New(dir)
+			result, err := reader.ReadLine(tc.targetFilename)
 
 			require.ErrorIs(t, err, tc.expectedError)
-			assert.Equal(t, tc.expectedScanResult, result)
+			assert.Equal(t, tc.expectedResult, result)
 		})
 	}
 }

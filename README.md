@@ -13,7 +13,7 @@ go install github.com/tinkyrain/go-sysmon/cmd/go-sysmon@latest   # or
 sudo apt install ./go-sysmon_*.deb
 ```
 
-Or build from source (Go 1.24+):
+Or build from source (Go 1.26+):
 
 ```bash
 git clone https://github.com/tinkyrain/go-sysmon.git

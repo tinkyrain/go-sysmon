@@ -137,25 +137,25 @@ func TestUsedPercent(t *testing.T) {
 		expected  int
 	}{
 		{
-			name:      "total and available are equal to zero",
+			name:      "an unknown total reads as zero",
 			total:     0,
 			available: 0,
 			expected:  0,
 		},
 		{
-			name:      "total is equal to 0, available is greater than total",
+			name:      "available without a total reads as zero",
 			total:     0,
 			available: 50,
 			expected:  0,
 		},
 		{
-			name:      "available equals total",
+			name:      "nothing used reads as zero",
 			total:     50,
 			available: 50,
 			expected:  0,
 		},
 		{
-			name:      "total is greater than 0, available is less than total",
+			name:      "used is the share that is not available",
 			total:     120,
 			available: 90,
 			expected:  25,

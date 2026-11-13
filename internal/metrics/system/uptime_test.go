@@ -73,17 +73,17 @@ func TestParseUptimeLineError(t *testing.T) {
 		expectedError error
 	}{
 		{
-			name:          "Incorrect data in the line",
+			name:          "a line with too few fields is rejected",
 			line:          "2025143.5",
 			expectedError: ErrIncorrectUptimeData,
 		},
 		{
-			name:          "Total uptime metric is incorrect",
+			name:          "a total uptime that is not a number is rejected",
 			line:          "test 509124.78",
 			expectedError: strconv.ErrSyntax,
 		},
 		{
-			name:          "Idle uptime metric is incorrect",
+			name:          "an idle uptime that is not a number is rejected",
 			line:          "509124.78 test",
 			expectedError: strconv.ErrSyntax,
 		},

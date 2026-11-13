@@ -41,15 +41,15 @@ func TestReadInfoScanError(t *testing.T) {
 		targetFile string
 	}{
 		{
-			name:       "File hostname not found",
+			name:       "a missing hostname file is an error",
 			targetFile: hostnameFile,
 		},
 		{
-			name:       "File osrelease not found",
+			name:       "a missing osrelease file is an error",
 			targetFile: osreleaseFile,
 		},
 		{
-			name:       "File ostype not found",
+			name:       "a missing ostype file is an error",
 			targetFile: ostypeFile,
 		},
 	}
@@ -74,15 +74,15 @@ func TestReadInfoFileIsEmptyError(t *testing.T) {
 		targetFile string
 	}{
 		{
-			name:       "File hostname is empty",
+			name:       "an empty hostname file is an error",
 			targetFile: hostnameFile,
 		},
 		{
-			name:       "File osrelease is empty",
+			name:       "an empty osrelease file is an error",
 			targetFile: osreleaseFile,
 		},
 		{
-			name:       "File ostype is empty",
+			name:       "an empty ostype file is an error",
 			targetFile: ostypeFile,
 		},
 	}

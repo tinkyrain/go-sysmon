@@ -114,35 +114,35 @@ func TestCollectError(t *testing.T) {
 		targetFile string
 	}{
 		{
-			name:       "File hostname is not exist",
+			name:       "a missing hostname file fails the collect",
 			targetFile: "sys/kernel/hostname",
 		},
 		{
-			name:       "File osrelease is not exist",
+			name:       "a missing osrelease file fails the collect",
 			targetFile: "sys/kernel/osrelease",
 		},
 		{
-			name:       "File ostype is not exist",
+			name:       "a missing ostype file fails the collect",
 			targetFile: "sys/kernel/ostype",
 		},
 		{
-			name:       "File loadavg is not exist",
+			name:       "a missing loadavg file fails the collect",
 			targetFile: "loadavg",
 		},
 		{
-			name:       "File uptime is not exist",
+			name:       "a missing uptime file fails the collect",
 			targetFile: "uptime",
 		},
 		{
-			name:       "File mounts is not exist",
+			name:       "a missing mounts file fails the collect",
 			targetFile: "mounts",
 		},
 		{
-			name:       "File meminfo is not exist",
+			name:       "a missing meminfo file fails the collect",
 			targetFile: "meminfo",
 		},
 		{
-			name:       "File stat is not exist",
+			name:       "a missing stat file fails the collect",
 			targetFile: "stat",
 		},
 	}

@@ -29,7 +29,7 @@ func TestReadUsageSuccess(t *testing.T) {
 		expectedPrevUsageSamples map[string]usageSample
 	}{
 		{
-			name:             "Success read without prev samples",
+			name:             "the first read reports zero and stores the samples",
 			prevUsageSamples: map[string]usageSample{},
 			expectedUsage: Usage{
 				Total: 0,
@@ -57,7 +57,7 @@ func TestReadUsageSuccess(t *testing.T) {
 			},
 		},
 		{
-			name: "Success read with prev samples",
+			name: "the next read reports the delta against the stored samples",
 			prevUsageSamples: map[string]usageSample{
 				"cpu": {
 					total:   7746198,
@@ -139,15 +139,15 @@ func TestReadUsageEmptyDataError(t *testing.T) {
 		fileContent string
 	}{
 		{
-			name:        "Empty file",
+			name:        "an empty file has no cpu data",
 			fileContent: "",
 		},
 		{
-			name:        "Without cpu lines",
+			name:        "a file without cpu lines has no cpu data",
 			fileContent: "intr 30062225 138 0 0 0 0 0 0 1 0 7 0 0 0 0 0 0 0 0 0",
 		},
 		{
-			name:        "Cpu lines with insufficient ticks",
+			name:        "cpu lines with too few ticks leave no cpu data",
 			fileContent: "cpu  298830 3399 75896\ncpu0 17496 72 6050",
 		},
 	}
@@ -239,12 +239,12 @@ func TestParseTicksLineError(t *testing.T) {
 		expectedError error
 	}{
 		{
-			name:          "Insufficient ticks in the line",
+			name:          "a line with too few ticks is rejected",
 			line:          []string{"cpu0", "17496", "72", "6050"},
 			expectedError: ErrIncorrectStatData,
 		},
 		{
-			name: "Convert tick value to uint error",
+			name: "a tick that is not a number is rejected",
 			line: []string{
 				"cpu0", "17496", "test", "6050", "650357", "437", "0", "376", "0", "0", "0",
 			},
@@ -270,37 +270,37 @@ func TestCalculateUsage(t *testing.T) {
 		expected float64
 	}{
 		{
-			name:     "Half of the ticks is busy",
+			name:     "usage is the busy share of the new ticks",
 			prev:     usageSample{total: 500, idle: 200, nonIdle: 300},
 			cur:      usageSample{total: 600, idle: 250, nonIdle: 350},
 			expected: 50,
 		},
 		{
-			name:     "Prev sample is blank",
+			name:     "the first sample has nothing to compare and reads as zero",
 			prev:     usageSample{},
 			cur:      usageSample{total: 600, idle: 250, nonIdle: 350},
 			expected: 0,
 		},
 		{
-			name:     "Idle ticks decreased",
+			name:     "idle ticks going backwards read as zero",
 			prev:     usageSample{total: 550, idle: 250, nonIdle: 300},
 			cur:      usageSample{total: 550, idle: 200, nonIdle: 350},
 			expected: 0,
 		},
 		{
-			name:     "Non idle ticks decreased",
+			name:     "busy ticks going backwards read as zero",
 			prev:     usageSample{total: 550, idle: 200, nonIdle: 350},
 			cur:      usageSample{total: 550, idle: 250, nonIdle: 300},
 			expected: 0,
 		},
 		{
-			name:     "Only idle ticks grew",
+			name:     "only idle ticks growing reads as zero",
 			prev:     usageSample{total: 500, idle: 200, nonIdle: 300},
 			cur:      usageSample{total: 550, idle: 250, nonIdle: 300},
 			expected: 0,
 		},
 		{
-			name:     "Ticks did not change",
+			name:     "ticks that did not move read as zero",
 			prev:     usageSample{total: 500, idle: 200, nonIdle: 300},
 			cur:      usageSample{total: 500, idle: 200, nonIdle: 300},
 			expected: 0,

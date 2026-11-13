@@ -10,6 +10,7 @@ import (
 func MemoryPage(data view.Memory, x1, y1, x2, y2 int) tui.Drawable {
 	halfWidth := (x2 - x1) / 2
 	halfHeight := (y2 - y1) / 2
+
 	info := widgets.NewParagraph()
 	info.Title = "Info"
 	info.Text = fieldsText(data.Info)

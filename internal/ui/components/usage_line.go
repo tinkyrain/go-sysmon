@@ -12,6 +12,5 @@ func UsageLine(title string, percent int) *widgets.LineGauge {
 	line.BarRune = '█'
 	line.BarRuneEmpty = '░'
 	line.LineColor = tui.ColorWhite
-	line.BorderRounded = true
 	return line
 }

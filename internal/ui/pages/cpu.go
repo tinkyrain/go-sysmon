@@ -32,21 +32,9 @@ func CPUPage(data view.CPU, x1, y1, x2, y2 int) tui.Drawable {
 
 	headerHeight := coreHeight + coresTitleHeight
 	coreCount := (y2 - y1 - headerHeight) / coreHeight
-	for _, core := range visibleCores(data.Cores, coreCount) {
+	for _, core := range visible(data.Cores, coreCount) {
 		column.AddItem(components.UsageLine(core.Label, core.Percent), coreHeight, 0, false)
 	}
 
 	return column
-}
-
-func visibleCores(cores []view.Gauge, count int) []view.Gauge {
-	if count < 1 {
-		return nil
-	}
-
-	if len(cores) > count {
-		return cores[:count]
-	}
-
-	return cores
 }

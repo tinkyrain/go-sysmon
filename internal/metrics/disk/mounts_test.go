@@ -59,21 +59,21 @@ func TestReadMountsError(t *testing.T) {
 		expectedReadResult []Mount
 	}{
 		{
-			name:               "Empty file",
+			name:               "an empty mounts file is an error",
 			fileContent:        "",
 			statfsFunc:         func(string) (statfs.Stats, error) { return statfs.Stats{}, nil },
 			expectedError:      ErrEmptyMountsData,
 			expectedReadResult: nil,
 		},
 		{
-			name:               "Not found suitable mounts",
+			name:               "a file with no supported filesystem is an error",
 			fileContent:        "/dev/nvme0n1p1 /boot/efi vfat123 rw,relatime,fmask=0022,dmask=0022",
 			statfsFunc:         func(string) (statfs.Stats, error) { return statfs.Stats{}, nil },
 			expectedError:      ErrNoSuitableMountsData,
 			expectedReadResult: nil,
 		},
 		{
-			name:               "Statfs error",
+			name:               "a statfs failure is passed through",
 			fileContent:        "/dev/nvme0n1p5 / ext4 rw,relatime 0 0",
 			statfsFunc:         func(string) (statfs.Stats, error) { return statfs.Stats{}, fs.ErrNotExist },
 			expectedError:      fs.ErrNotExist,

@@ -20,13 +20,13 @@ func TestProcfsReadLinesSuccess(t *testing.T) {
 		expected []string
 	}{
 		{
-			name:     "Successfully complete reading the file",
+			name:     "a single line comes back as one element",
 			filename: "file",
 			content:  "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
 			expected: []string{"Lorem ipsum dolor sit amet, consectetur adipiscing elit"},
 		},
 		{
-			name:     "Successfully complete reading the file with many lines",
+			name:     "every line becomes its own element",
 			filename: "file",
 			content:  "Lorem ipsum\ndolor sit amet",
 			expected: []string{
@@ -35,7 +35,7 @@ func TestProcfsReadLinesSuccess(t *testing.T) {
 			},
 		},
 		{
-			name:     "Successfully complete reading blank the file",
+			name:     "an empty file reads as an empty slice",
 			filename: "file",
 			content:  "",
 			expected: []string{},
@@ -66,14 +66,14 @@ func TestProcfsReadLinesError(t *testing.T) {
 		expectedError  error
 	}{
 		{
-			name:           "File not found",
+			name:           "a missing file is an error",
 			filename:       "file",
 			targetFilename: "file_not_found",
 			expectedResult: nil,
 			expectedError:  os.ErrNotExist,
 		},
 		{
-			name:           "File with line more 64 KB",
+			name:           "a line over 64 KB is an error",
 			filename:       "file",
 			targetFilename: "file",
 			content:        strings.Repeat("A", 65*1024),
@@ -104,19 +104,19 @@ func TestProcfsReadLineSuccess(t *testing.T) {
 		expected string
 	}{
 		{
-			name:     "Successfully complete reading the file",
+			name:     "a single line comes back whole",
 			filename: "file",
 			content:  "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
 			expected: "Lorem ipsum dolor sit amet, consectetur adipiscing elit",
 		},
 		{
-			name:     "Successfully complete reading the file with many lines",
+			name:     "only the first line is returned",
 			filename: "file",
 			content:  "Lorem ipsum\ndolor sit amet",
 			expected: "Lorem ipsum",
 		},
 		{
-			name:     "Successfully complete reading blank the file",
+			name:     "an empty file reads as an empty string",
 			filename: "file",
 			content:  "",
 			expected: "",
@@ -147,14 +147,14 @@ func TestProcfsReadLineError(t *testing.T) {
 		expectedError  error
 	}{
 		{
-			name:           "File not found",
+			name:           "a missing file is an error",
 			filename:       "file",
 			targetFilename: "file_not_found",
 			expectedResult: "",
 			expectedError:  os.ErrNotExist,
 		},
 		{
-			name:           "File with line more 64 KB",
+			name:           "a line over 64 KB is an error",
 			filename:       "file",
 			targetFilename: "file",
 			content:        strings.Repeat("A", 65*1024),

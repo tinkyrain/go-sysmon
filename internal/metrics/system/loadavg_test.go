@@ -81,42 +81,42 @@ func TestParseLoadAvgLineError(t *testing.T) {
 		expectedError error
 	}{
 		{
-			name:          "Incorrect data in the line",
+			name:          "a line with too few fields is rejected",
 			line:          "0.25 0.30 1/456",
 			expectedError: ErrIncorrectLoadAvgData,
 		},
 		{
-			name:          "One min metric is incorrect",
+			name:          "a one min value that is not a number is rejected",
 			line:          "test 0.25 0.30 1/456 12345",
 			expectedError: strconv.ErrSyntax,
 		},
 		{
-			name:          "Five min metric is incorrect",
+			name:          "a five min value that is not a number is rejected",
 			line:          "0.15 test 0.30 1/456 12345",
 			expectedError: strconv.ErrSyntax,
 		},
 		{
-			name:          "Fifteen min metric is incorrect",
+			name:          "a fifteen min value that is not a number is rejected",
 			line:          "0.15 0.25 test 1/456 12345",
 			expectedError: strconv.ErrSyntax,
 		},
 		{
-			name:          "Lastpid metric is incorrect",
+			name:          "a last PID that is not a number is rejected",
 			line:          "0.15 0.25 0.30 1/456 test",
 			expectedError: strconv.ErrSyntax,
 		},
 		{
-			name:          "Running procs metric is incorrect",
+			name:          "a running procs value that is not a number is rejected",
 			line:          "0.15 0.25 0.30 test/456 12345",
 			expectedError: strconv.ErrSyntax,
 		},
 		{
-			name:          "Total procs metric is incorrect",
+			name:          "a total procs value that is not a number is rejected",
 			line:          "0.15 0.25 0.30 1/test 12345",
 			expectedError: strconv.ErrSyntax,
 		},
 		{
-			name:          "Procs metric string is incorrect",
+			name:          "a procs field without a slash is rejected",
 			line:          "0.15 0.25 0.30 test 12345",
 			expectedError: ErrIncorrectLoadAvgData,
 		},

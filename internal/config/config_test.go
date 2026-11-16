@@ -34,7 +34,7 @@ func TestLoadSuccess(t *testing.T) {
 		expected    Config
 	}{
 		{
-			name: "Full config file",
+			name: "every field in the file overrides the default",
 			fileContent: `title = "Example full config file"
 
 interval = "8s"
@@ -45,15 +45,23 @@ proc_root = "/test_proc/"`,
 			},
 		},
 		{
-			name:        "Blank config file",
+			name:        "an empty file falls back to the defaults",
 			fileContent: "",
 			expected:    expectedDefaultConfig(),
 		},
 		{
-			name:        "Only interval is filled",
+			name:        "a field left out keeps its default",
 			fileContent: "interval = '12s'",
 			expected: Config{
 				Interval: 12 * time.Second,
+				ProcRoot: "/proc",
+			},
+		},
+		{
+			name:        "an interval equal to the minimum is accepted",
+			fileContent: "interval = '100ms'",
+			expected: Config{
+				Interval: 100 * time.Millisecond,
 				ProcRoot: "/proc",
 			},
 		},
@@ -83,12 +91,12 @@ func TestLoadValidateError(t *testing.T) {
 		expectedError error
 	}{
 		{
-			name:          "Interval is less than allowed",
-			fileContent:   "interval = '3ms'\nproc_root = '/proc'",
+			name:          "an interval below the minimum is rejected",
+			fileContent:   "interval = '99ms'\nproc_root = '/proc'",
 			expectedError: ErrInvalidInterval,
 		},
 		{
-			name:          "Proc root is blank",
+			name:          "an empty proc root is rejected",
 			fileContent:   "interval = '1s'\nproc_root = ''",
 			expectedError: ErrBlankProcRoot,
 		},

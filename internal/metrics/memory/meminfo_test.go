@@ -59,37 +59,37 @@ func TestReadMemInfoError(t *testing.T) {
 		expectedError error
 	}{
 		{
-			name:          "Empty file",
+			name:          "an empty file has no memory data",
 			fileContent:   "",
 			expectedError: ErrEmptyMemInfoData,
 		},
 		{
-			name:          "Convert value to uint error",
+			name:          "a value that is not a number is rejected",
 			fileContent:   "MemTotal:	testme",
 			expectedError: strconv.ErrSyntax,
 		},
 		{
-			name:          "MemTotal metric missing",
+			name:          "MemTotal missing is rejected",
 			fileContent:   "MemAvailable: 200 kB\nSwapTotal: 10 kB\nSwapFree: 3 kB",
 			expectedError: ErrIncorrectMemInfoData,
 		},
 		{
-			name:          "MemAvailable metric missing",
+			name:          "MemAvailable missing is rejected",
 			fileContent:   "MemTotal: 210 kB\nSwapTotal: 10 kB\nSwapFree: 3 kB",
 			expectedError: ErrIncorrectMemInfoData,
 		},
 		{
-			name:          "SwapTotal metric missing",
+			name:          "SwapTotal missing is rejected",
 			fileContent:   "MemTotal: 210 kB\nMemAvailable: 200 kB\nSwapFree: 3 kB",
 			expectedError: ErrIncorrectMemInfoData,
 		},
 		{
-			name:          "SwapFree metric missing",
+			name:          "SwapFree missing is rejected",
 			fileContent:   "MemTotal: 210 kB\nMemAvailable: 200 kB\nSwapTotal: 10 kB",
 			expectedError: ErrIncorrectMemInfoData,
 		},
 		{
-			name:          "All metrics is incorrect",
+			name:          "keys without values are rejected",
 			fileContent:   "MemTotal:\nMemAvailable:\nSwapTotal:\nSwapFree:",
 			expectedError: ErrIncorrectMemInfoData,
 		},

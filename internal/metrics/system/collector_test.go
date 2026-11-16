@@ -57,27 +57,27 @@ func TestCollectError(t *testing.T) {
 		expectedError error
 	}{
 		{
-			name:          "Hostname file not found",
+			name:          "a missing hostname file fails the collect",
 			targetFile:    hostnameFile,
 			expectedError: os.ErrNotExist,
 		},
 		{
-			name:          "Osrelease file not found",
+			name:          "a missing osrelease file fails the collect",
 			targetFile:    osreleaseFile,
 			expectedError: os.ErrNotExist,
 		},
 		{
-			name:          "Ostype file not found",
+			name:          "a missing ostype file fails the collect",
 			targetFile:    ostypeFile,
 			expectedError: os.ErrNotExist,
 		},
 		{
-			name:          "Loadavg file not found",
+			name:          "a missing loadavg file fails the collect",
 			targetFile:    loadAvgFile,
 			expectedError: os.ErrNotExist,
 		},
 		{
-			name:          "Uptime file not found",
+			name:          "a missing uptime file fails the collect",
 			targetFile:    uptimeFile,
 			expectedError: os.ErrNotExist,
 		},

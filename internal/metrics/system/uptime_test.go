@@ -17,6 +17,8 @@ func uptimeFiles() map[string]string {
 }
 
 func TestReadUptimeSuccess(t *testing.T) {
+	t.Parallel()
+
 	expected := Uptime{
 		Total: 509124.78,
 		Idle:  2025143.51,
@@ -31,6 +33,8 @@ func TestReadUptimeSuccess(t *testing.T) {
 }
 
 func TestReadUptimeScanError(t *testing.T) {
+	t.Parallel()
+
 	files := uptimeFiles()
 	delete(files, uptimeFile)
 
@@ -43,6 +47,8 @@ func TestReadUptimeScanError(t *testing.T) {
 }
 
 func TestReadUptimeEmptyDataError(t *testing.T) {
+	t.Parallel()
+
 	files := uptimeFiles()
 	files[uptimeFile] = ""
 
@@ -55,6 +61,8 @@ func TestReadUptimeEmptyDataError(t *testing.T) {
 }
 
 func TestParseUptimeLineSuccess(t *testing.T) {
+	t.Parallel()
+
 	expected := Uptime{
 		Total: 509124.78,
 		Idle:  2025143.51,
@@ -67,6 +75,8 @@ func TestParseUptimeLineSuccess(t *testing.T) {
 }
 
 func TestParseUptimeLineError(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		name          string
 		line          string
@@ -91,6 +101,7 @@ func TestParseUptimeLineError(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			result, err := parseUptimeLine(tc.line)
 
 			require.ErrorIs(t, err, tc.expectedError)

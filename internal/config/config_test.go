@@ -28,6 +28,8 @@ func expectedDefaultConfig() Config {
 }
 
 func TestLoadSuccess(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		name        string
 		fileContent string
@@ -69,6 +71,7 @@ proc_root = "/test_proc/"`,
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			result, err := Load(configPath(t, tc.fileContent))
 
 			require.NoError(t, err)
@@ -78,6 +81,8 @@ proc_root = "/test_proc/"`,
 }
 
 func TestLoadFileNotFound(t *testing.T) {
+	t.Parallel()
+
 	result, err := Load(filepath.Join(t.TempDir(), configFileName))
 
 	require.NoError(t, err)
@@ -85,6 +90,8 @@ func TestLoadFileNotFound(t *testing.T) {
 }
 
 func TestLoadValidateError(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		name          string
 		fileContent   string
@@ -104,6 +111,7 @@ func TestLoadValidateError(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			result, err := Load(configPath(t, tc.fileContent))
 
 			require.ErrorIs(t, err, tc.expectedError)
@@ -113,6 +121,8 @@ func TestLoadValidateError(t *testing.T) {
 }
 
 func TestLoadParseError(t *testing.T) {
+	t.Parallel()
+
 	var parseError toml.ParseError
 
 	result, err := Load(configPath(t, "interval : '12s'\nerror: df"))
@@ -122,6 +132,8 @@ func TestLoadParseError(t *testing.T) {
 }
 
 func TestLoadReadError(t *testing.T) {
+	t.Parallel()
+
 	path := filepath.Join(t.TempDir(), configFileName)
 	require.NoError(t, os.Mkdir(path, 0o755))
 

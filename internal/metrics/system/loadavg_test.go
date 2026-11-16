@@ -17,6 +17,8 @@ func loadavgFiles() map[string]string {
 }
 
 func TestReadLoadAvgSuccess(t *testing.T) {
+	t.Parallel()
+
 	expected := LoadAvg{
 		OneMin:       0.15,
 		FiveMin:      0.25,
@@ -35,6 +37,8 @@ func TestReadLoadAvgSuccess(t *testing.T) {
 }
 
 func TestReadLoadAvgScanError(t *testing.T) {
+	t.Parallel()
+
 	files := loadavgFiles()
 	delete(files, loadAvgFile)
 
@@ -47,6 +51,8 @@ func TestReadLoadAvgScanError(t *testing.T) {
 }
 
 func TestReadLoadAvgEmptyDataError(t *testing.T) {
+	t.Parallel()
+
 	files := loadavgFiles()
 	files[loadAvgFile] = ""
 
@@ -59,6 +65,8 @@ func TestReadLoadAvgEmptyDataError(t *testing.T) {
 }
 
 func TestParseLoadAvgLineSuccess(t *testing.T) {
+	t.Parallel()
+
 	expected := LoadAvg{
 		OneMin:       0.15,
 		FiveMin:      0.25,
@@ -75,6 +83,8 @@ func TestParseLoadAvgLineSuccess(t *testing.T) {
 }
 
 func TestParseLoadAvgLineError(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		name          string
 		line          string
@@ -124,6 +134,7 @@ func TestParseLoadAvgLineError(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			result, err := parseLoadAvgLine(tc.line)
 
 			require.ErrorIs(t, err, tc.expectedError)

@@ -19,6 +19,8 @@ func infoFiles() map[string]string {
 }
 
 func TestReadInfoSuccess(t *testing.T) {
+	t.Parallel()
+
 	files := infoFiles()
 	expected := Info{
 		Hostname: files[hostnameFile],
@@ -36,6 +38,8 @@ func TestReadInfoSuccess(t *testing.T) {
 }
 
 func TestReadInfoScanError(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		name       string
 		targetFile string
@@ -56,6 +60,7 @@ func TestReadInfoScanError(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			files := infoFiles()
 			delete(files, tc.targetFile)
 
@@ -69,6 +74,8 @@ func TestReadInfoScanError(t *testing.T) {
 }
 
 func TestReadInfoFileIsEmptyError(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		name       string
 		targetFile string
@@ -89,6 +96,7 @@ func TestReadInfoFileIsEmptyError(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			files := infoFiles()
 			files[tc.targetFile] = ""
 

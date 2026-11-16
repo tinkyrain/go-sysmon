@@ -20,6 +20,8 @@ tmpfs /run tmpfs rw,nosuid,nodev,noexec,relatime,size=1300344k,mode=755,inode64 
 }
 
 func TestCollectSuccess(t *testing.T) {
+	t.Parallel()
+
 	expected := Stats{
 		Mounts: []Mount{
 			{
@@ -53,6 +55,8 @@ func TestCollectSuccess(t *testing.T) {
 }
 
 func TestCollectError(t *testing.T) {
+	t.Parallel()
+
 	files := diskFiles()
 	delete(files, mountFile)
 

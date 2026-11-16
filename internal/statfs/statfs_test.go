@@ -13,6 +13,8 @@ import (
 )
 
 func TestRead(t *testing.T) {
+	t.Parallel()
+
 	stat, err := statfs.Read(t.TempDir())
 
 	require.NoError(t, err)
@@ -22,6 +24,8 @@ func TestRead(t *testing.T) {
 }
 
 func TestReadOnFile(t *testing.T) {
+	t.Parallel()
+
 	file := filepath.Join(t.TempDir(), "f")
 	require.NoError(t, os.WriteFile(file, nil, 0o600))
 
@@ -32,6 +36,8 @@ func TestReadOnFile(t *testing.T) {
 }
 
 func TestReadNotFound(t *testing.T) {
+	t.Parallel()
+
 	missing := filepath.Join(t.TempDir(), "nope")
 	_, err := statfs.Read(missing)
 	require.ErrorIs(t, err, fs.ErrNotExist)

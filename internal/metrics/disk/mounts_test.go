@@ -20,6 +20,8 @@ func mountsFiles() map[string]string {
 }
 
 func TestReadMountsSuccess(t *testing.T) {
+	t.Parallel()
+
 	expected := []Mount{
 		{
 			Path:      "/boot/efi",
@@ -51,6 +53,8 @@ func TestReadMountsSuccess(t *testing.T) {
 }
 
 func TestReadMountsError(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		name               string
 		fileContent        string
@@ -83,6 +87,7 @@ func TestReadMountsError(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			files := mountsFiles()
 			files[mountFile] = tc.fileContent
 

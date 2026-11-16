@@ -74,6 +74,8 @@ func testSnapshot() metrics.Snapshot {
 }
 
 func TestRunContextCanceled(t *testing.T) {
+	t.Parallel()
+
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
@@ -87,6 +89,8 @@ func TestRunContextCanceled(t *testing.T) {
 }
 
 func TestRunRendererDone(t *testing.T) {
+	t.Parallel()
+
 	ctx, cancel := context.WithTimeout(context.Background(), safetyTimeout)
 	defer cancel()
 
@@ -102,6 +106,8 @@ func TestRunRendererDone(t *testing.T) {
 }
 
 func TestRunRenderSnapshot(t *testing.T) {
+	t.Parallel()
+
 	expected := testSnapshot()
 
 	ctx, cancel := context.WithTimeout(context.Background(), safetyTimeout)
@@ -122,6 +128,8 @@ func TestRunRenderSnapshot(t *testing.T) {
 }
 
 func TestRunCollectError(t *testing.T) {
+	t.Parallel()
+
 	ctx, cancel := context.WithTimeout(context.Background(), safetyTimeout)
 	defer cancel()
 
@@ -139,6 +147,8 @@ func TestRunCollectError(t *testing.T) {
 }
 
 func TestRunCollectErrorInLoop(t *testing.T) {
+	t.Parallel()
+
 	expected := testSnapshot()
 
 	ctx, cancel := context.WithTimeout(context.Background(), safetyTimeout)

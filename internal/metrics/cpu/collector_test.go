@@ -20,6 +20,8 @@ intr 30062225 138 0 0 0 0 0 0 1 0 7 0 0 0 0 0 0 0 0 0
 }
 
 func TestCollectSuccess(t *testing.T) {
+	t.Parallel()
+
 	expected := Stats{
 		Usage: Usage{
 			Total: 0,
@@ -38,6 +40,8 @@ func TestCollectSuccess(t *testing.T) {
 }
 
 func TestCollectError(t *testing.T) {
+	t.Parallel()
+
 	files := cpuFiles()
 	delete(files, statFile)
 

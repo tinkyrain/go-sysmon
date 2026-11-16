@@ -21,6 +21,8 @@ func systemFiles() map[string]string {
 }
 
 func TestCollectSuccess(t *testing.T) {
+	t.Parallel()
+
 	expected := Stats{
 		Info: Info{
 			Hostname: "hostname",
@@ -51,6 +53,8 @@ func TestCollectSuccess(t *testing.T) {
 }
 
 func TestCollectError(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		name          string
 		targetFile    string
@@ -85,6 +89,7 @@ func TestCollectError(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			files := systemFiles()
 			delete(files, tc.targetFile)
 

@@ -22,6 +22,8 @@ intr 30062225 138 0 0 0 0 0 0 1 0 7 0 0 0 0 0 0 0 0 0
 }
 
 func TestReadUsageSuccess(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		name                     string
 		prevUsageSamples         map[string]usageSample
@@ -104,6 +106,7 @@ func TestReadUsageSuccess(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			reader := usageReader{
 				fs:               procfs.New(tempDirWithFiles(t, usageFiles())),
 				prevUsageSamples: tc.prevUsageSamples,
@@ -119,6 +122,8 @@ func TestReadUsageSuccess(t *testing.T) {
 }
 
 func TestReadUsageScanError(t *testing.T) {
+	t.Parallel()
+
 	files := usageFiles()
 	delete(files, statFile)
 
@@ -134,6 +139,8 @@ func TestReadUsageScanError(t *testing.T) {
 }
 
 func TestReadUsageEmptyDataError(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		name        string
 		fileContent string
@@ -154,6 +161,7 @@ func TestReadUsageEmptyDataError(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			files := usageFiles()
 			files[statFile] = tc.fileContent
 
@@ -171,6 +179,8 @@ func TestReadUsageEmptyDataError(t *testing.T) {
 }
 
 func TestReadUsageConvertTicksError(t *testing.T) {
+	t.Parallel()
+
 	files := usageFiles()
 	files[statFile] = "cpu  298830 test 75896 7741115 5083 0 1586 0 0 0"
 
@@ -186,6 +196,8 @@ func TestReadUsageConvertTicksError(t *testing.T) {
 }
 
 func TestReadUsageSkipsUnsuitableLines(t *testing.T) {
+	t.Parallel()
+
 	expected := Usage{
 		Total: 0,
 		Cores: []CoreUsage{
@@ -210,6 +222,8 @@ intr 30062225 138 0 0 0 0 0 0 1 0 7 0 0 0 0 0 0 0 0 0`
 }
 
 func TestParseTicksLineSuccess(t *testing.T) {
+	t.Parallel()
+
 	expected := ticks{
 		id:        "cpu0",
 		user:      17496,
@@ -233,6 +247,8 @@ func TestParseTicksLineSuccess(t *testing.T) {
 }
 
 func TestParseTicksLineError(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		name          string
 		line          []string
@@ -254,6 +270,7 @@ func TestParseTicksLineError(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			result, err := parseTicksLine(tc.line)
 
 			require.ErrorIs(t, err, tc.expectedError)
@@ -263,6 +280,8 @@ func TestParseTicksLineError(t *testing.T) {
 }
 
 func TestCalculateUsage(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		name     string
 		prev     usageSample
@@ -309,6 +328,7 @@ func TestCalculateUsage(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			result := calculateUsage(tc.prev, tc.cur)
 
 			assert.Equal(t, tc.expected, result)

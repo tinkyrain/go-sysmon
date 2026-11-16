@@ -23,6 +23,8 @@ Dirty:              1788 kB
 }
 
 func TestCollectSuccess(t *testing.T) {
+	t.Parallel()
+
 	expected := Stats{
 		Info: Info{
 			Total:         13315522560,
@@ -40,6 +42,8 @@ func TestCollectSuccess(t *testing.T) {
 }
 
 func TestCollectError(t *testing.T) {
+	t.Parallel()
+
 	files := memoryFiles()
 	delete(files, meminfoFile)
 

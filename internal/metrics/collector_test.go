@@ -41,6 +41,8 @@ intr 30062225 138 0 0 0 0 0 0 1 0 7 0 0 0 0 0 0 0 0 0
 }
 
 func TestCollectSuccess(t *testing.T) {
+	t.Parallel()
+
 	expected := Snapshot{
 		Time: time.Now(),
 		System: system.Stats{
@@ -109,6 +111,8 @@ func TestCollectSuccess(t *testing.T) {
 }
 
 func TestCollectError(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		name       string
 		targetFile string
@@ -149,6 +153,7 @@ func TestCollectError(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			files := metricsFiles()
 			delete(files, tc.targetFile)
 

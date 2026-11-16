@@ -25,6 +25,8 @@ Dirty:              1788 kB
 }
 
 func TestReadMemInfoSuccess(t *testing.T) {
+	t.Parallel()
+
 	expected := Info{
 		Total:         13315522560,
 		Available:     5244837888,
@@ -41,6 +43,8 @@ func TestReadMemInfoSuccess(t *testing.T) {
 }
 
 func TestReadMemInfoScanError(t *testing.T) {
+	t.Parallel()
+
 	files := meminfoFiles()
 	delete(files, meminfoFile)
 
@@ -53,6 +57,8 @@ func TestReadMemInfoScanError(t *testing.T) {
 }
 
 func TestReadMemInfoError(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		name          string
 		fileContent   string
@@ -97,6 +103,7 @@ func TestReadMemInfoError(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			files := meminfoFiles()
 			files[meminfoFile] = tc.fileContent
 

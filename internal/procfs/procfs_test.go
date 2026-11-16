@@ -13,6 +13,8 @@ import (
 )
 
 func TestProcfsReadLinesSuccess(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		name     string
 		filename string
@@ -44,6 +46,7 @@ func TestProcfsReadLinesSuccess(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			dir := t.TempDir()
 			require.NoError(t, os.WriteFile(filepath.Join(dir, tc.filename), []byte(tc.content), 0o600))
 
@@ -57,6 +60,8 @@ func TestProcfsReadLinesSuccess(t *testing.T) {
 }
 
 func TestProcfsReadLinesError(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		name           string
 		targetFilename string
@@ -84,6 +89,7 @@ func TestProcfsReadLinesError(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			dir := t.TempDir()
 			require.NoError(t, os.WriteFile(filepath.Join(dir, tc.filename), []byte(tc.content), 0o600))
 
@@ -97,6 +103,8 @@ func TestProcfsReadLinesError(t *testing.T) {
 }
 
 func TestProcfsReadLineSuccess(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		name     string
 		filename string
@@ -125,6 +133,7 @@ func TestProcfsReadLineSuccess(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			dir := t.TempDir()
 			require.NoError(t, os.WriteFile(filepath.Join(dir, tc.filename), []byte(tc.content), 0o600))
 
@@ -138,6 +147,8 @@ func TestProcfsReadLineSuccess(t *testing.T) {
 }
 
 func TestProcfsReadLineError(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		name           string
 		targetFilename string
@@ -165,6 +176,7 @@ func TestProcfsReadLineError(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
 			dir := t.TempDir()
 			require.NoError(t, os.WriteFile(filepath.Join(dir, tc.filename), []byte(tc.content), 0o600))
 

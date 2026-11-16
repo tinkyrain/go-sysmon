@@ -63,7 +63,7 @@ func Load(path string) (Config, error) {
 }
 
 func validate(config Config) error {
-	if config.Interval <= 100*time.Millisecond {
+	if config.Interval < 100*time.Millisecond {
 		return fmt.Errorf("%w: got %s", ErrInvalidInterval, config.Interval)
 	}
 	if config.ProcRoot == "" {

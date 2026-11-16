@@ -57,6 +57,14 @@ proc_root = "/test_proc/"`,
 				ProcRoot: "/proc",
 			},
 		},
+		{
+			name:        "an interval equal the minimum is accepted",
+			fileContent: "interval = '100ms'",
+			expected: Config{
+				Interval: 100 * time.Millisecond,
+				ProcRoot: "/proc",
+			},
+		},
 	}
 
 	for _, tc := range cases {
@@ -84,7 +92,7 @@ func TestLoadValidateError(t *testing.T) {
 	}{
 		{
 			name:          "an interval below the minimum is rejected",
-			fileContent:   "interval = '3ms'\nproc_root = '/proc'",
+			fileContent:   "interval = '99ms'\nproc_root = '/proc'",
 			expectedError: ErrInvalidInterval,
 		},
 		{

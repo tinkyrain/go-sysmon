@@ -58,7 +58,7 @@ proc_root = "/test_proc/"`,
 			},
 		},
 		{
-			name:        "an interval equal the minimum is accepted",
+			name:        "an interval equal to the minimum is accepted",
 			fileContent: "interval = '100ms'",
 			expected: Config{
 				Interval: 100 * time.Millisecond,

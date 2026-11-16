@@ -12,6 +12,7 @@ import (
 	"github.com/tinkyrain/go-sysmon/internal/app"
 	"github.com/tinkyrain/go-sysmon/internal/config"
 	"github.com/tinkyrain/go-sysmon/internal/metrics"
+	"github.com/tinkyrain/go-sysmon/internal/ui/view"
 )
 
 const (
@@ -29,8 +30,8 @@ type mockRenderer struct {
 	mock.Mock
 }
 
-func (m *mockRenderer) Render(snapshot metrics.Snapshot) {
-	m.Called(snapshot)
+func (m *mockRenderer) Render(data view.RenderData) {
+	m.Called(data)
 }
 
 func (m *mockRenderer) Done() <-chan struct{} {
@@ -82,7 +83,6 @@ func TestRunContextCanceled(t *testing.T) {
 
 	require.NoError(t, err)
 	renderer.AssertNumberOfCalls(t, "Render", 1)
-	renderer.AssertCalled(t, "Render", metrics.Snapshot{})
 	renderer.AssertNumberOfCalls(t, "Close", 0)
 }
 
@@ -98,7 +98,6 @@ func TestRunRendererDone(t *testing.T) {
 
 	require.NoError(t, err)
 	renderer.AssertNumberOfCalls(t, "Render", 1)
-	renderer.AssertCalled(t, "Render", metrics.Snapshot{})
 	renderer.AssertNumberOfCalls(t, "Close", 0)
 }
 
@@ -118,7 +117,7 @@ func TestRunRenderSnapshot(t *testing.T) {
 	err := app.Run(ctx, config.Config{Interval: tickInterval}, renderer, collect)
 
 	require.NoError(t, err)
-	renderer.AssertCalled(t, "Render", expected)
+	renderer.AssertCalled(t, "Render", view.NewRenderData(expected))
 	renderer.AssertNumberOfCalls(t, "Close", 0)
 }
 
@@ -163,5 +162,5 @@ func TestRunCollectErrorInLoop(t *testing.T) {
 	require.ErrorIs(t, err, errCollect)
 	assert.Equal(t, 2, calls)
 	renderer.AssertNumberOfCalls(t, "Render", 1)
-	renderer.AssertCalled(t, "Render", expected)
+	renderer.AssertCalled(t, "Render", view.NewRenderData(expected))
 }

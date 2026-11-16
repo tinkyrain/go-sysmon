@@ -7,6 +7,7 @@ import (
 	"github.com/tinkyrain/go-sysmon/internal/config"
 	"github.com/tinkyrain/go-sysmon/internal/metrics"
 	"github.com/tinkyrain/go-sysmon/internal/ui"
+	"github.com/tinkyrain/go-sysmon/internal/ui/view"
 )
 
 func Run(
@@ -29,11 +30,9 @@ func Run(
 		case <-renderer.Done():
 			return nil
 		case <-ticker.C:
-			snapshot, err := collect()
-			if err != nil {
+			if err := render(collect, renderer); err != nil {
 				return err
 			}
-			renderer.Render(snapshot)
 		}
 	}
 }
@@ -43,6 +42,6 @@ func render(collect func() (metrics.Snapshot, error), renderer ui.Renderer) erro
 	if err != nil {
 		return err
 	}
-	renderer.Render(snapshot)
+	renderer.Render(view.NewRenderData(snapshot))
 	return nil
 }

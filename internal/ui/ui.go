@@ -5,14 +5,13 @@ import (
 
 	tui "github.com/metaspartan/gotui/v5"
 	"github.com/metaspartan/gotui/v5/widgets"
-	"github.com/tinkyrain/go-sysmon/internal/metrics"
 	"github.com/tinkyrain/go-sysmon/internal/ui/components"
 	"github.com/tinkyrain/go-sysmon/internal/ui/pages"
 	"github.com/tinkyrain/go-sysmon/internal/ui/view"
 )
 
 type Renderer interface {
-	Render(snapshot metrics.Snapshot)
+	Render(data view.RenderData)
 	Done() <-chan struct{}
 	Close()
 }
@@ -78,10 +77,6 @@ func (r *tuiRenderer) Done() <-chan struct{} {
 	return r.doneCh
 }
 
-func (r *tuiRenderer) Render(snapshot metrics.Snapshot) {
-	r.draw(view.NewRenderData(snapshot))
-}
-
 func (r *tuiRenderer) redraw(change func(tab *widgets.TabPane)) {
 	r.mu.Lock()
 	if change != nil && r.tab != nil {
@@ -90,10 +85,10 @@ func (r *tuiRenderer) redraw(change func(tab *widgets.TabPane)) {
 	data := r.lastData
 	r.mu.Unlock()
 
-	r.draw(data)
+	r.Render(data)
 }
 
-func (r *tuiRenderer) draw(data view.RenderData) {
+func (r *tuiRenderer) Render(data view.RenderData) {
 	w, h := tui.TerminalDimensions()
 	hintsHeight := 3
 	tabHeight := 2

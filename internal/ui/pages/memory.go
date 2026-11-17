@@ -15,8 +15,8 @@ func MemoryPage(data view.Memory, x1, y1, x2, y2 int) tui.Drawable {
 	info.Title = "Info"
 	info.Text = fieldsText(data.Info)
 
-	memoryUsageLine := components.UsageLine(data.RAM.Label, data.RAM.Percent)
-	swapUsageLine := components.UsageLine(data.Swap.Label, data.Swap.Percent)
+	memoryUsageBlock := components.UsageBlock(data.RAM.Label, data.RAM.Percent)
+	swapUsageBlock := components.UsageBlock(data.Swap.Label, data.Swap.Percent)
 
 	infoFlex := widgets.NewFlex()
 	infoFlex.Direction = widgets.FlexColumn
@@ -40,8 +40,8 @@ func MemoryPage(data view.Memory, x1, y1, x2, y2 int) tui.Drawable {
 	memoryUsageFlex.PaddingLeft = -1
 	memoryUsageFlex.PaddingRight = -1
 
-	memoryUsageFlex.AddItem(memoryUsageLine, halfHeight, 0, false)
-	memoryUsageFlex.AddItem(swapUsageLine, (y2-y1)-halfHeight, 0, false)
+	memoryUsageFlex.AddItem(memoryUsageBlock, halfHeight, 0, false)
+	memoryUsageFlex.AddItem(swapUsageBlock, (y2-y1)-halfHeight, 0, false)
 
 	flex := widgets.NewFlex()
 	flex.Direction = widgets.FlexRow

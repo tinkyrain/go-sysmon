@@ -113,17 +113,19 @@ func TestRunRenderSnapshot(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), safetyTimeout)
 	defer cancel()
 
-	renderer := newMockRenderer(blockedDone())
-	renderer.On("Render", mock.Anything).Run(func(mock.Arguments) { cancel() })
+	renderer := &mockRenderer{}
+	renderer.On("Done").Return(blockedDone())
+	renderer.On("Render", mock.Anything).Run(func(mock.Arguments) { cancel() }).Return()
 
 	collect := func() (metrics.Snapshot, error) {
 		return expected, nil
 	}
 
-	err := app.Run(ctx, config.Config{Interval: tickInterval}, renderer, collect)
+	err := app.Run(ctx, config.Config{Interval: neverTick}, renderer, collect)
 
 	require.NoError(t, err)
 	renderer.AssertCalled(t, "Render", view.NewRenderData(expected))
+	renderer.AssertNumberOfCalls(t, "Render", 1)
 	renderer.AssertNumberOfCalls(t, "Close", 0)
 }
 
@@ -155,7 +157,6 @@ func TestRunCollectErrorInLoop(t *testing.T) {
 	defer cancel()
 
 	renderer := newMockRenderer(blockedDone())
-	renderer.On("Render", mock.Anything).Return()
 
 	calls := 0
 	collect := func() (metrics.Snapshot, error) {

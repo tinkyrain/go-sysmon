@@ -1,6 +1,8 @@
 # Terminal system monitor for Linux
 System info, CPU, memory and disk usage on four tabs, one keypress apart.
 
+[![lint-and-test](https://github.com/tinkyrain/go-sysmon/actions/workflows/lint-and-test.yml/badge.svg)](https://github.com/tinkyrain/go-sysmon/actions/workflows/lint-and-test.yml)
+
 <img src="https://github.com/tinkyrain/go-sysmon/blob/main/preview.gif?raw=true" width="900" alt="go-sysmon work example">
 
 ## Install
@@ -54,6 +56,32 @@ proc_root = "/proc"  # path to procfs
 
 The values above are the defaults.
 
+## Testing
+
+```bash
+go test -race ./...                        # what CI runs
+go test ./... -coverprofile=cover.out      # the table below
+go tool cover -func=cover.out | tail -1    # the total
+```
+
+Total statement coverage is **35.3%**. In package order, as `go test` reports it:
+
+| Package | Coverage |
+|---|---|
+| `cmd/go-sysmon` | 0.0% |
+| `internal/app` | 100.0% |
+| `internal/config` | 100.0% |
+| `internal/metrics` | 100.0% |
+| `internal/metrics/cpu` | 100.0% |
+| `internal/metrics/disk` | 100.0% |
+| `internal/metrics/memory` | 100.0% |
+| `internal/metrics/system` | 100.0% |
+| `internal/procfs` | 100.0% |
+| `internal/statfs` | 100.0% |
+| `internal/ui` | 0.0% |
+| `internal/ui/components` | 0.0% |
+| `internal/ui/pages` | 2.2% |
+| `internal/ui/view` | 100.0% |
 ## License
 
 MIT
